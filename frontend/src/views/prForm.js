@@ -4,6 +4,7 @@ import { toast, esc, chip } from '../ui.js';
 import { STATUSES } from '../lib/status.js';
 import { computeLineTotal, computeTotalAmount } from '../lib/items.js';
 import { fmtMoney } from '../lib/currency.js';
+import { searchCurrencies, isCurrency } from '../lib/currencies.js';
 
 const PAYMENTS = ['Unpaid', 'Paid', 'Partially Paid', 'FOC / Free'];
 const FALLBACK = {
@@ -14,6 +15,20 @@ const FALLBACK = {
 };
 
 const list = (s, name) => (s.lists && s.lists[name] && s.lists[name].length ? s.lists[name] : FALLBACK[name]) || [];
+
+// field-name → hover hint shown via the "?" bubble next to the label
+const HINTS = {
+  project: 'Which running project this purchase belongs to. Only your department’s projects are listed — ask an admin to add one if yours is missing.',
+  purpose: 'One line on why this purchase is needed, e.g. “Calibration jigs for the EnvizomPro batch”.',
+  vendor: 'The registered vendor you’ll buy from. Only vendors mapped to your department appear — an admin can register new ones.',
+  currency: 'Currency of the vendor’s quote. Type to search any world currency by code, name or symbol.',
+  priority: 'How urgent: High = blocking work now, Medium = needed soon, Low = whenever convenient.',
+  expected: 'Date you expect the goods to arrive — used for the In-Transit tracking on the dashboard.',
+  payment: 'Whether the vendor has been paid. Usually Unpaid when raising the request.',
+  notes: 'Anything the approver or purchase team should know — links, context, constraints.'
+};
+const lbl = (text, hintKey) => `<span class="lblrow">${esc(text)}${
+  HINTS[hintKey] ? `<span class="hq" data-tip="${esc(HINTS[hintKey])}">?</span>` : ''}</span>`;
 
 // Keep a stored value selectable even if it's not in the list (e.g. legacy data),
 // otherwise saving silently rewrites it to the first <option>.
@@ -92,19 +107,23 @@ export function prFormView(el, s, editId) {
           <h2>General information</h2>
           <div class="pd-body pd-form">
             <div class="pd-grid">
-              <label>Project* <select name="project" required>${opts(projNames, p.project || '', true)}</select></label>
-              <label>Purpose <input name="purpose" value="${esc(p.purpose)}"></label>
-              <label>Vendor <select name="vendor">${opts(vendorNames, p.vendor || '', true)}</select></label>
-              <label>Currency <select name="currency">${opts(list(s, 'currencies'), p.currency || 'INR')}</select></label>
-              <label>Priority <select name="priority">${opts(list(s, 'priorities'), p.priority || 'Medium')}</select></label>
-              <label>Expected delivery <input name="expectedDate" type="date" value="${esc((p.expectedDate || '').slice(0, 10))}"></label>
+              <label>${lbl('Project*', 'project')} <select name="project" required>${opts(projNames, p.project || '', true)}</select></label>
+              <label>${lbl('Purpose', 'purpose')} <input name="purpose" value="${esc(p.purpose)}"></label>
+              <label>${lbl('Vendor', 'vendor')} <select name="vendor">${opts(vendorNames, p.vendor || '', true)}</select></label>
+              <label style="position:relative">${lbl('Currency', 'currency')}
+                <input id="curSearch" autocomplete="off" spellcheck="false" value="${esc(p.currency || 'INR')}">
+                <input type="hidden" name="currency" value="${esc(p.currency || 'INR')}">
+                <div class="curList" id="curList" hidden></div>
+              </label>
+              <label>${lbl('Priority', 'priority')} <select name="priority">${opts(list(s, 'priorities'), p.priority || 'Medium')}</select></label>
+              <label>${lbl('Expected delivery', 'expected')} <input name="expectedDate" type="date" value="${esc((p.expectedDate || '').slice(0, 10))}"></label>
               ${staff ? `
-              <label>Payment status* <select name="paymentStatus" required>${opts(PAYMENTS, p.paymentStatus || 'Unpaid')}</select></label>` : ''}
+              <label>${lbl('Payment status*', 'payment')} <select name="paymentStatus" required>${opts(PAYMENTS, p.paymentStatus || 'Unpaid')}</select></label>` : ''}
               ${editing && me.role === 'admin' ? `
               <label>Status (admin override) <select name="status">${opts(STATUSES, p.status)}</select></label>
               <label>Requester email (admin override) <input name="requesterEmail" value="${esc(p.requesterEmail)}"></label>` : ''}
             </div>
-            <label style="margin-top:14px">Notes <textarea name="notes" rows="3">${esc(p.notes)}</textarea></label>
+            <label style="margin-top:14px">${lbl('Notes', 'notes')} <textarea name="notes" rows="3">${esc(p.notes)}</textarea></label>
           </div>
         </div>
 
@@ -157,7 +176,36 @@ export function prFormView(el, s, editId) {
   };
   [...rowsEl.children].forEach(wireRow);
   renderTotal();
-  form.querySelector('[name="currency"]').oninput = renderTotal;
+
+  // Currency combobox: search input drives the visible list; the hidden
+  // [name=currency] input holds the committed ISO code the form submits.
+  const curInput = el.querySelector('#curSearch');
+  const curHidden = form.querySelector('[name="currency"]');
+  const curList = el.querySelector('#curList');
+  const commonCur = list(s, 'currencies');
+  const showCur = q => {
+    const rows = searchCurrencies(q, commonCur).slice(0, 30);
+    curList.innerHTML = rows.map(c =>
+      `<div class="curOpt" data-code="${esc(c.code)}"><b>${esc(c.code)}</b> ${esc(c.name)}<span>${esc(c.sym || '')}</span></div>`
+    ).join('') || '<div class="curEmpty">No currency matches</div>';
+    curList.hidden = false;
+  };
+  curInput.onfocus = () => { curInput.select(); showCur(''); };
+  curInput.oninput = () => showCur(curInput.value);
+  curList.onmousedown = e => {   // mousedown: runs before the input's blur
+    const opt = e.target.closest('.curOpt');
+    if (!opt) return;
+    curInput.value = curHidden.value = opt.dataset.code;
+    curList.hidden = true;
+    renderTotal();
+  };
+  curInput.onblur = () => setTimeout(() => {
+    curList.hidden = true;
+    const code = curInput.value.trim().toUpperCase();
+    if (isCurrency(code)) curHidden.value = code;
+    curInput.value = curHidden.value; // snap back if the text isn't a valid code
+    renderTotal();
+  }, 150);
 
   el.querySelector('#addItem').onclick = () => {
     rowsEl.insertAdjacentHTML('beforeend', itemRowHtml(s, {}, rowsEl.children.length, typeNames, showZoho));

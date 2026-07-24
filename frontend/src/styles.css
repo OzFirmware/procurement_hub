@@ -226,3 +226,17 @@ span.adm-chip{cursor:default;padding:2px 8px;font-size:11px}
 .pd-form input,.pd-form select,.pd-form textarea{font-size:14px;text-transform:none;letter-spacing:0;font-weight:400}
 .pd-form textarea{background:var(--adm-surface);border:1px solid var(--adm-outline);border-radius:8px;padding:8px 12px;font-family:inherit;color:var(--adm-primary)}
 .pd-form textarea:focus{outline:none;border-color:var(--adm-primary);box-shadow:0 0 0 2px rgba(19,37,53,.2)}
+.lblrow{display:flex;gap:6px;align-items:center}
+.hq{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;
+  background:var(--adm-outline);color:#fff;font-size:10px;font-weight:700;cursor:help;position:relative;flex:none}
+.hq::after{content:attr(data-tip);position:absolute;left:-8px;top:calc(100% + 7px);width:230px;z-index:60;
+  background:#152735;color:#fff;padding:9px 11px;border-radius:8px;font-size:11px;font-weight:400;line-height:1.45;
+  letter-spacing:0;text-transform:none;opacity:0;pointer-events:none;transition:opacity .12s}
+.hq:hover::after{opacity:1}
+.curList{position:absolute;top:100%;left:0;right:0;max-height:230px;overflow:auto;background:#fff;z-index:50;
+  border:1px solid var(--adm-outline);border-radius:8px;box-shadow:0 8px 24px -4px rgba(21,39,53,.18)}
+.curOpt{display:flex;gap:8px;align-items:baseline;padding:8px 12px;cursor:pointer;font-size:13px;
+  letter-spacing:0;text-transform:none;font-weight:400;color:var(--adm-primary)}
+.curOpt:hover{background:var(--adm-low)}
+.curOpt span{margin-left:auto;color:var(--mut)}
+.curEmpty{padding:8px 12px;font-size:12px;color:var(--mut);letter-spacing:0;text-transform:none}
