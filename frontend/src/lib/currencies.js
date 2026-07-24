@@ -170,16 +170,13 @@ export function currencyLabel(code) {
   return c ? `${c.code} — ${c.name}${c.sym ? ' ' + c.sym : ''}` : String(code || '');
 }
 
-// Substring search over code, name and symbol. Ranking: currencies from the
-// sheet's Lists tab (commonCodes) first, then code-prefix matches, then rest.
-export function searchCurrencies(q, commonCodes = []) {
+// Substring search over code, name and symbol; code-prefix matches rank first.
+export function searchCurrencies(q) {
   const t = String(q || '').trim().toLowerCase();
   const hits = !t ? [...CURRENCIES] : CURRENCIES.filter(c =>
     c.code.toLowerCase().includes(t) ||
     c.name.toLowerCase().includes(t) ||
     (c.sym && c.sym.toLowerCase().includes(t)));
-  const rank = c =>
-    (commonCodes.includes(c.code) ? 0 : 2) +
-    (t && c.code.toLowerCase().startsWith(t) ? 0 : 1);
+  const rank = c => (t && c.code.toLowerCase().startsWith(t) ? 0 : 1);
   return hits.sort((a, b) => rank(a) - rank(b) || a.code.localeCompare(b.code));
 }

@@ -41,9 +41,7 @@ describe('searchCurrencies', () => {
   it('matches by symbol', () => {
     expect(searchCurrencies('₹').map(c => c.code)).toContain('INR');
   });
-  it('ranks common codes first, then prefix matches', () => {
-    const res = searchCurrencies('', ['USD', 'INR']);
-    expect(res.slice(0, 2).map(c => c.code).sort()).toEqual(['INR', 'USD']);
+  it('ranks code-prefix matches before substring matches', () => {
     const kr = searchCurrencies('kr').map(c => c.code);
     expect(kr.indexOf('KRW')).toBeLessThan(kr.indexOf('DKK')); // prefix beats substring ('krone')
   });

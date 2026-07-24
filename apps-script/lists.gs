@@ -1,8 +1,11 @@
 // ===== Lists tab: one column per dropdown list =====
 // Admins edit this tab directly in the sheet; no UI, no route.
 
+// currencies moved out of Lists: the frontend ships the full ISO 4217 list
+// (frontend/src/lib/currencies.js) and the sheet validates against
+// CURRENCY_CODES in setup.gs. A leftover currencies column is harmless.
 var LISTS_HEADERS = ['departments', 'materialTypes', 'priorities', 'couriers',
-  'paymentTerms', 'units', 'currencies'];
+  'paymentTerms', 'units'];
 
 var LISTS_SEED = {
   departments: ['Admin', 'Device Management', 'Environment', 'Marketing', 'Production',
@@ -11,8 +14,7 @@ var LISTS_SEED = {
   priorities: ['High', 'Medium', 'Low'],
   couriers: ['BlueDart', 'DHL', 'FedEx', 'DTDC', 'India Post', 'Amazon', 'Porter', 'Delhivery', 'Other'],
   paymentTerms: ['Advance 100%', 'Advance 50%', 'Net 15', 'Net 30', 'On Delivery', 'Milestone'],
-  units: ['pcs', 'L', 'kg', 'm', 'set', 'box', 'license'],
-  currencies: ['INR', 'USD', 'EUR']
+  units: ['pcs', 'L', 'kg', 'm', 'set', 'box', 'license']
 };
 
 function getLists_() {

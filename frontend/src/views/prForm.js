@@ -9,7 +9,6 @@ import { searchCurrencies, isCurrency, currencyLabel } from '../lib/currencies.j
 const PAYMENTS = ['Unpaid', 'Paid', 'Partially Paid', 'FOC / Free'];
 const FALLBACK = {
   priorities: ['High', 'Medium', 'Low'],
-  currencies: ['INR', 'USD', 'EUR'],
   couriers: ['BlueDart', 'DHL', 'FedEx', 'DTDC', 'India Post', 'Other'],
   departments: [], materialTypes: [], paymentTerms: [], units: []
 };
@@ -182,9 +181,8 @@ export function prFormView(el, s, editId) {
   const curInput = el.querySelector('#curSearch');
   const curHidden = form.querySelector('[name="currency"]');
   const curList = el.querySelector('#curList');
-  const commonCur = list(s, 'currencies');
   const showCur = q => {
-    const rows = searchCurrencies(q, commonCur).slice(0, 30);
+    const rows = searchCurrencies(q).slice(0, 30);
     curList.innerHTML = rows.map(c =>
       `<div class="curOpt" data-code="${esc(c.code)}"><b>${esc(c.code)}</b> ${esc(c.name)}<span>${esc(c.sym || '')}</span></div>`
     ).join('') || '<div class="curEmpty">No currency matches</div>';
