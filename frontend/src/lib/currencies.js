@@ -164,6 +164,12 @@ const byCode = new Map(CURRENCIES.map(c => [c.code, c]));
 
 export const isCurrency = code => byCode.has(String(code || '').trim().toUpperCase());
 
+// "INR" → "INR — Indian Rupee ₹" (falls back to the raw value when unknown)
+export function currencyLabel(code) {
+  const c = byCode.get(String(code || '').trim().toUpperCase());
+  return c ? `${c.code} — ${c.name}${c.sym ? ' ' + c.sym : ''}` : String(code || '');
+}
+
 // Substring search over code, name and symbol. Ranking: currencies from the
 // sheet's Lists tab (commonCodes) first, then code-prefix matches, then rest.
 export function searchCurrencies(q, commonCodes = []) {

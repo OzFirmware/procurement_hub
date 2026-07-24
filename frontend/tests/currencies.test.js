@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { CURRENCIES, searchCurrencies, isCurrency } from '../src/lib/currencies.js';
+import { CURRENCIES, searchCurrencies, isCurrency, currencyLabel } from '../src/lib/currencies.js';
+
+describe('currencyLabel', () => {
+  it('formats code with name and symbol, passes unknowns through', () => {
+    expect(currencyLabel('inr')).toBe('INR — Indian Rupee ₹');
+    expect(currencyLabel('WAT')).toBe('WAT');
+    expect(currencyLabel('')).toBe('');
+  });
+});
 
 describe('CURRENCIES', () => {
   it('covers major world currencies with symbols', () => {

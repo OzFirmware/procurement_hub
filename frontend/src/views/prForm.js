@@ -4,7 +4,7 @@ import { toast, esc, chip } from '../ui.js';
 import { STATUSES } from '../lib/status.js';
 import { computeLineTotal, computeTotalAmount } from '../lib/items.js';
 import { fmtMoney } from '../lib/currency.js';
-import { searchCurrencies, isCurrency } from '../lib/currencies.js';
+import { searchCurrencies, isCurrency, currencyLabel } from '../lib/currencies.js';
 
 const PAYMENTS = ['Unpaid', 'Paid', 'Partially Paid', 'FOC / Free'];
 const FALLBACK = {
@@ -111,7 +111,7 @@ export function prFormView(el, s, editId) {
               <label>${lbl('Purpose', 'purpose')} <input name="purpose" value="${esc(p.purpose)}"></label>
               <label>${lbl('Vendor', 'vendor')} <select name="vendor">${opts(vendorNames, p.vendor || '', true)}</select></label>
               <label style="position:relative">${lbl('Currency', 'currency')}
-                <input id="curSearch" autocomplete="off" spellcheck="false" value="${esc(p.currency || 'INR')}">
+                <input id="curSearch" autocomplete="off" spellcheck="false" value="${esc(currencyLabel(p.currency || 'INR'))}">
                 <input type="hidden" name="currency" value="${esc(p.currency || 'INR')}">
                 <div class="curList" id="curList" hidden></div>
               </label>
@@ -195,15 +195,17 @@ export function prFormView(el, s, editId) {
   curList.onmousedown = e => {   // mousedown: runs before the input's blur
     const opt = e.target.closest('.curOpt');
     if (!opt) return;
-    curInput.value = curHidden.value = opt.dataset.code;
+    curHidden.value = opt.dataset.code;
+    curInput.value = currencyLabel(opt.dataset.code);
     curList.hidden = true;
     renderTotal();
   };
   curInput.onblur = () => setTimeout(() => {
     curList.hidden = true;
-    const code = curInput.value.trim().toUpperCase();
+    // accept a typed bare code ("aed"); anything else snaps back to committed
+    const code = curInput.value.split('—')[0].trim().toUpperCase();
     if (isCurrency(code)) curHidden.value = code;
-    curInput.value = curHidden.value; // snap back if the text isn't a valid code
+    curInput.value = currencyLabel(curHidden.value);
     renderTotal();
   }, 150);
 
