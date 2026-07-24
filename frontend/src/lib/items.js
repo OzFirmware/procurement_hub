@@ -1,5 +1,5 @@
 // Item math + the PR ⇄ Items client-side join.
-// v3 PRs carry money on `totalAmount` (server-computed) and descriptions on
+// PRs carry money on `totalAmount` (server-computed) and descriptions on
 // the Items tab. decoratePrs() maps that shape onto the legacy field names
 // (amount, item, qty) so metrics/reports/dashboard consumers stay unchanged.
 

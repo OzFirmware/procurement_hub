@@ -7,7 +7,7 @@ come from GitHub Actions secrets; local dev reads `frontend/.env.local`
 (gitignored).
 
 > Click-by-click details for the spreadsheet/Apps Script parts:
-> [docs/setup-v3-walkthrough.md](docs/setup-v3-walkthrough.md)
+> [docs/setup-walkthrough.md](docs/setup-walkthrough.md)
 
 ## 0. What is public vs secret (read once)
 
@@ -28,14 +28,14 @@ project. Remaining steps, in order:
 
 1. Project Settings → check "Show appsscript.json" → paste
    `apps-script/appsscript.json` if not done.
-2. Run `setupV3()` (select function → Run → authorize). Logs must say
-   "v3 tabs ready". Verify tabs: PRs, Items, Users, Log, Lists, Vendors;
+2. Run `setup()` (select function → Run → authorize). Logs must say
+   "Procurement Hub tabs ready". Verify tabs: PRs, Items, Users, Log, Lists, Vendors;
    `Lists` seeded; dropdown validation on PRs + Items.
 3. **Migration (optional).** Bringing legacy data from the v1 sheet:
    set `LEGACY_FILE_ID` in `migrate.gs` to the OLD sheet's file id, run
    `dumpLegacyHeaders()` and eyeball logs (unmapped headers → add to
    `HEADER_MAP`; odd status words → extend `OLD_STATUS_MAP`), then run
-   `migrateLegacyV3()`. Idempotent; never writes to the old file. Afterwards
+   `migrateLegacy()`. Idempotent; never writes to the old file. Afterwards
    review the Vendors tab for near-duplicates. You validated this flow on
    the demo sheet — repeat it here against the production copy.
 4. Set `OAUTH_CLIENT_ID` in `auth.gs` (value from §2). **Do this BEFORE
@@ -115,7 +115,7 @@ fresh commit (no old blobs survive — nothing to scrub):
 
 ```bash
 git checkout --orphan public-release
-git commit -m "Procurement tool v3"
+git commit -m "Procurement Hub release"
 git push ozfirmware +public-release:main
 git checkout main && git branch -D public-release
 ```

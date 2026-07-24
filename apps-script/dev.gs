@@ -23,7 +23,7 @@ registerRoute_('dumpLegacyHeaders', { minRole: 'admin' }, function () {
 });
 
 registerRoute_('runMigration', { minRole: 'admin' }, function (user) {
-  var migrated = migrateLegacyV3();
+  var migrated = migrateLegacy();
   log_(user, '', 'runMigration', 'migrated ' + migrated + ' PRs');
   return { migrated: migrated };
 });

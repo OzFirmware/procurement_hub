@@ -1,13 +1,13 @@
-// ===== One-time migration v2: legacy spreadsheet dept tabs → v3 PRs + Items =====
+// ===== One-time migration: legacy spreadsheet dept tabs → Procurement Hub PRs + Items =====
 // 1. Paste the OLD spreadsheet's Drive file id into LEGACY_FILE_ID.
 // 2. Run dumpLegacyHeaders() and eyeball unmapped headers; extend HEADER_MAP if needed.
-// 3. Run migrateLegacyV3(). Idempotent (skips when PRs has data). Old file is never written.
+// 3. Run migrateLegacy(). Idempotent (skips when PRs has data). Old file is never written.
 
 var LEGACY_FILE_ID = ''; // <-- old spreadsheet id (from its URL)
 
 var LEGACY_SKIP_TABS = ['PRs', 'Users', 'Log', 'Form Responses 1'];
 
-// normalized legacy header → v3 field. Item-level and PR-level fields mixed;
+// normalized legacy header → current field. Item-level and PR-level fields mixed;
 // splitLegacyRow_ decides which goes where.
 var HEADER_MAP = {
   // item-level
@@ -134,7 +134,7 @@ function detectCurrency_(curCol, amtStr) {
   return '';
 }
 
-function migrateLegacyV3() {
+function migrateLegacy() {
   var target = prSheet_();
   if (target.getLastRow() > 1) {
     Logger.log('PRs tab already has data — migration skipped (idempotent).');

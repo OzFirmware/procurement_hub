@@ -1,4 +1,4 @@
-// Oizom Purchase Tool backend. Bound to the procurement Google Sheet.
+// Oizom Procurement Hub backend. Bound to the procurement Google Sheet.
 // All requests: POST JSON {action, token, ...}. Response: {ok, ...} JSON.
 
 var ROUTES = {}; // filled by registerRoute_ calls in other files

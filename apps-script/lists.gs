@@ -19,7 +19,7 @@ var LISTS_SEED = {
 
 function getLists_() {
   var cache = CacheService.getScriptCache();
-  var hit = cache.get('lists-v3');
+  var hit = cache.get('lists');
   if (hit) return JSON.parse(hit);
   var data = sheet_('Lists', LISTS_HEADERS).getDataRange().getValues();
   var out = {};
@@ -30,6 +30,6 @@ function getLists_() {
       if (v) out[h].push(v);
     }
   });
-  cache.put('lists-v3', JSON.stringify(out), 300);
+  cache.put('lists', JSON.stringify(out), 300);
   return out;
 }

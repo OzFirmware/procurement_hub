@@ -1,4 +1,4 @@
-# Oizom Purchase Tool v2
+# Oizom Procurement Hub
 
 A dashboard for creating and tracking purchase requests across Oizom departments, with role-based permissions and an audit trail. PRs live in a Google Sheet; the dashboard provides live tracking, reports (spend, status, vendor performance), and single-approver workflow. All mutations are server-side enforced via Apps Script and logged to an audit trail. The sheet remains the source of truth; the dashboard is a stateless, offline-safe view.
 

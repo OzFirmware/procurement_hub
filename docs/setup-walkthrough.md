@@ -1,9 +1,9 @@
-# v3 Setup Walkthrough (detailed, click-by-click)
+# Procurement Hub Setup Walkthrough (detailed, click-by-click)
 
 A beginner-friendly companion to [SETUP.md](../SETUP.md). SETUP.md is the terse
 runbook; this document explains every click and why.
 
-**Recommended order for a first rollout:** set up a fresh, empty v3 system and
+**Recommended order for a first rollout:** set up a fresh, empty Procurement Hub system and
 test it end to end (Phases 1–2 and 4–6). Migrate legacy data later, once you
 trust the tool (Phase 3 is optional and can be run at any time before real
 usage begins — see the note inside it).
@@ -33,9 +33,8 @@ Total time: roughly 30–45 minutes (excluding migration).
 
 ## Phase 0 — Before you start
 
-1. **Git branch.** The v3 code lives on branch `v3-sheet-structure` (until it
-   is merged to main). Make sure your working copy is on the right branch
-   before copying any files:
+1. **Git branch.** The code lives on `main`. Make sure your working copy is
+   on it and up to date before copying any files:
 
    ```bash
    git branch --show-current
@@ -55,7 +54,7 @@ Total time: roughly 30–45 minutes (excluding migration).
 ## Phase 1 — Create the new spreadsheet and paste the backend code
 
 1. Go to [sheets.google.com](https://sheets.google.com) → **Blank
-   spreadsheet**. Name it (e.g. "Oizom Purchases v3"). Leave it completely
+   spreadsheet**. Name it (e.g. "Oizom Procurement Hub"). Leave it completely
    empty — no tabs, no columns.
 
 2. In the new spreadsheet: **Extensions → Apps Script**. A code editor opens
@@ -92,21 +91,21 @@ Total time: roughly 30–45 minutes (excluding migration).
 
 ## Phase 2 — Let the code build the sheet structure
 
-Never create tabs or columns by hand — `setupV3()` builds everything.
+Never create tabs or columns by hand — `setup()` builds everything.
 
-1. In the toolbar's function dropdown (next to **Run**), select **`setupV3`**
+1. In the toolbar's function dropdown (next to **Run**), select **`setup`**
    → **Run**.
 2. The first run asks for authorization: pick your Google account → if it
    says "Google hasn't verified this app", click **Advanced → Go to (project
    name)** → **Allow**. Normal for your own scripts.
 3. Check the execution log (bottom panel, or **View → Logs**) — expect
-   **"v3 tabs ready"**.
+   **"Procurement Hub tabs ready"**.
 4. Switch to the spreadsheet: 6 tabs should exist — **PRs, Items, Users,
    Log, Lists, Vendors** — with headers, and `Lists` seeded with dropdown
    values (departments, materialTypes, priorities, couriers, paymentTerms,
    units, currencies).
 
-The v3 structure now exists. For a fresh-start rollout, skip to Phase 4.
+The Procurement Hub structure now exists. For a fresh-start rollout, skip to Phase 4.
 
 ---
 
@@ -133,7 +132,7 @@ The v3 structure now exists. For a fresh-start rollout, skip to Phase 4.
      (case-insensitive). Any other status text silently becomes
      **"Received"**. Extend the map first if needed.
 
-3. Run **`migrateLegacyV3`**. The log ends with "Migrated N PRs, M items,
+3. Run **`migrateLegacy`**. The log ends with "Migrated N PRs, M items,
    K vendors" — sanity-check the numbers against the legacy sheet's row
    counts. It never writes to the old file, and it skips entirely if `PRs`
    already has rows (delete test rows first; see timing note above).

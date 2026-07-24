@@ -1,9 +1,9 @@
-// ===== One-time v3 spreadsheet bootstrap =====
-// Run setupV3() from the Apps Script editor of the NEW spreadsheet.
+// ===== One-time Procurement Hub spreadsheet bootstrap =====
+// Run setup() from the Apps Script editor of the NEW spreadsheet.
 // Idempotent: sheet_() only creates missing tabs; Lists is only seeded when empty;
 // re-applying validations is harmless.
 
-function setupV3() {
+function setup() {
   sheet_('PRs', PR_HEADERS);
   sheet_('Items', ITEM_HEADERS);
   sheet_('Users', USERS_HEADERS);
@@ -23,7 +23,7 @@ function setupV3() {
     lists.getRange(2, 1, rows.length, LISTS_HEADERS.length).setValues(rows);
   }
   applyValidations_();
-  Logger.log('v3 tabs ready.');
+  Logger.log('Procurement Hub tabs ready.');
 }
 
 // ISO 4217 active codes — keep in sync with frontend/src/lib/currencies.js
