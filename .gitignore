@@ -1,0 +1,11 @@
+node_modules/
+frontend/dist/
+.env
+.env.local
+.env.*.local
+.clasp.json
+.superpowers/
+admin.html
+hehe.txt
+previouse.html
+Procurement_hub/
