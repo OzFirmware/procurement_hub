@@ -24,7 +24,15 @@ const HINTS = {
   priority: 'How urgent: High = blocking work now, Medium = needed soon, Low = whenever convenient.',
   expected: 'Date you expect the goods to arrive — used for the In-Transit tracking on the dashboard.',
   payment: 'Whether the vendor has been paid. Usually Unpaid when raising the request.',
-  notes: 'Anything the approver or purchase team should know — links, context, constraints.'
+  notes: 'Anything the approver or purchase team should know — links, context, constraints.',
+  iDesc: 'What you’re buying — one line per item, e.g. “ESP32-S3 DevKit N16R8”.',
+  iZoho: 'Zoho part number, links the item to Production inventory (e.g. Z-0042).',
+  iType: 'Item category for your department — drives reporting. Ask an admin to add a missing type.',
+  iQty: 'How many, counted in the unit chosen next to it.',
+  iUnit: 'Unit of measure: pcs, kg, m, set…',
+  iPrice: 'Price for ONE unit, in the PR’s currency. Line total = qty × unit price; leave blank if unknown.',
+  iLink: 'URL of the exact product page / variant you want ordered.',
+  iDoc: 'Datasheet or spec document URL, if relevant.'
 };
 const lbl = (text, hintKey) => `<span class="lblrow">${esc(text)}${
   HINTS[hintKey] ? `<span class="hq" data-tip="${esc(HINTS[hintKey])}">?</span>` : ''}</span>`;
@@ -143,7 +151,18 @@ export function prFormView(el, s, editId) {
 
         <div class="card">
           <h2>Requested items</h2>
-          <div class="pd-body">
+          <div class="pd-body pd-form">
+            <div class="itemrow ithead ${showZoho ? '' : 'nz'}">
+              <span>${lbl('Description*', 'iDesc')}</span>
+              ${showZoho ? `<span>${lbl('Zoho no', 'iZoho')}</span>` : ''}
+              <span>${lbl('Type*', 'iType')}</span>
+              <span>${lbl('Qty*', 'iQty')}</span>
+              <span>${lbl('Unit*', 'iUnit')}</span>
+              <span>${lbl('Unit price', 'iPrice')}</span>
+              <span>${lbl('Purchase link', 'iLink')}</span>
+              <span>${lbl('Datasheet', 'iDoc')}</span>
+              <span></span>
+            </div>
             <div id="itemRows">${items.map((it, i) => itemRowHtml(s, it, i, typeNames, showZoho)).join('')}</div>
             <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
               <button type="button" class="btn" id="addItem">+ Add item</button>
