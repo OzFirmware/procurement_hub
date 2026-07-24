@@ -147,7 +147,7 @@ function usersSection(s) {
               <div class="adm-user">
                 <div class="adm-avatar" style="background:${avatarBg(u.email)}">${esc(initials(u.email))}</div>
                 <div>
-                  <div class="adm-name">${esc(displayName(u.email))}</div>
+                  <div class="adm-name">${esc(u.name || displayName(u.email))}</div>
                   <div class="adm-email">${esc(u.email)}</div>
                 </div>
               </div>

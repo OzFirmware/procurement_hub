@@ -3,11 +3,11 @@ var ALLOWED_DOMAIN = 'oizom.com';
 // check (set it before real deployment!).
 var OAUTH_CLIENT_ID = ''; // paste your client ID here in the Apps Script editor — never commit it
 
-var USERS_HEADERS = ['email', 'role', 'addedBy', 'addedAt', 'department'];
+var USERS_HEADERS = ['email', 'role', 'addedBy', 'addedAt', 'department', 'name'];
 
 function requireUser_(body) {
   var v = verifyToken_(body.token);
-  var info = getUserInfo_(v.email);
+  var info = getUserInfo_(v.email, v.name);
   return { email: v.email, name: v.name, role: info.role, department: info.department };
 }
 
@@ -39,7 +39,14 @@ function verifyToken_(idToken) {
   return { email: email, name: String(info.name || '') };
 }
 
-function getUserInfo_(email) {
+// Sheets created before the name column existed have 5 header cells.
+function ensureNameHeader_(sh) {
+  if (String(sh.getRange(1, 6).getValue()) !== 'name') {
+    sh.getRange(1, 6).setValue('name');
+  }
+}
+
+function getUserInfo_(email, name) {
   var sh = sheet_('Users', USERS_HEADERS);
   var data = sh.getDataRange().getValues();
   // Bootstrap: empty Users tab (only header) → first caller becomes admin
@@ -51,7 +58,7 @@ function getUserInfo_(email) {
       // in case another concurrent first call already bootstrapped admin.
       data = sh.getDataRange().getValues();
       if (data.length < 2) {
-        sh.appendRow([email, 'admin', 'bootstrap', nowIso_(), '']);
+        sh.appendRow([email, 'admin', 'bootstrap', nowIso_(), '', name || '']);
         SpreadsheetApp.flush(); // commit the write before the lock is released
         return { role: 'admin', department: '' };
       }
@@ -61,6 +68,11 @@ function getUserInfo_(email) {
   }
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][0]).toLowerCase() === email) {
+      // keep the Google profile name synced so admin views show real names
+      if (name && String(data[i][5] || '') !== name) {
+        ensureNameHeader_(sh);
+        sh.getRange(i + 1, 6).setValue(name);
+      }
       var role = String(data[i][1]).toLowerCase();
       if (!role) throw new Error('Access pending — ask an admin to assign your role and department');
       return { role: role, department: String(data[i][4] || '') };
@@ -78,7 +90,8 @@ function getUserInfo_(email) {
       if (String(data[k][0]).toLowerCase() === email) { exists = true; break; }
     }
     if (!exists) {
-      sh.appendRow([email, '', 'self-signup', nowIso_(), '']);
+      ensureNameHeader_(sh);
+      sh.appendRow([email, '', 'self-signup', nowIso_(), '', name || '']);
       SpreadsheetApp.flush();
     }
   } finally {
