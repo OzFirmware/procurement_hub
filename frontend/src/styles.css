@@ -239,7 +239,8 @@ span.adm-chip{cursor:default;padding:2px 8px;font-size:11px}
 .pd-total{display:flex;justify-content:flex-end;align-items:baseline;gap:8px;padding:14px 24px;font-size:13px;color:var(--mut)}
 .pd-total b{font-size:16px;color:var(--ink)}
 .pd-danger{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 24px!important;border-color:#f0c4c4!important;background:#fdf7f7!important}
-.pd-form label{display:flex;flex-direction:column;gap:5px;font-size:10px;letter-spacing:.4px;text-transform:uppercase;font-weight:600;color:var(--mut)}
+.pd-form label,.pd-form .pd-field{display:flex;flex-direction:column;gap:5px;font-size:10px;letter-spacing:.4px;text-transform:uppercase;font-weight:600;color:var(--mut)}
+.pd-form .pd-field{position:relative}
 .pd-form input,.pd-form select,.pd-form textarea{font-size:14px;text-transform:none;letter-spacing:0;font-weight:400}
 .pd-form textarea{background:var(--adm-surface);border:1px solid var(--adm-outline);border-radius:8px;padding:8px 12px;font-family:inherit;color:var(--adm-primary)}
 .pd-form textarea:focus{outline:none;border-color:var(--adm-primary);box-shadow:0 0 0 2px rgba(19,37,53,.2)}

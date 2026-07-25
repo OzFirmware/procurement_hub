@@ -87,9 +87,12 @@ export function prFormView(el, s, editId) {
   const projNames = (s.projects || [])
     .filter(x => x.department.toLowerCase() === dept.toLowerCase())
     .map(x => x.project);
-  const vendorNames = (s.vendors || [])
-    .filter(v => (v.departments || []).some(d => d.toLowerCase() === dept.toLowerCase()))
-    .map(v => v.name);
+  const deptVendors = (s.vendors || [])
+    .filter(v => (v.departments || []).some(d => d.toLowerCase() === dept.toLowerCase()));
+  const vendorLabelOf = name => {
+    const v = deptVendors.find(x => x.name.toLowerCase() === String(name || '').toLowerCase());
+    return v ? (v.displayName || v.name) : String(name || '');
+  };
   const typeNames = (s.materialTypes || [])
     .filter(x => x.department.toLowerCase() === dept.toLowerCase())
     .map(x => x.materialType);
@@ -118,12 +121,16 @@ export function prFormView(el, s, editId) {
             <div class="pd-grid">
               <label>${lbl('Project*', 'project')} <select name="project" required>${opts(projNames, p.project || '', true)}</select></label>
               <label>${lbl('Purpose', 'purpose')} <input name="purpose" value="${esc(p.purpose)}"></label>
-              <label>${lbl('Vendor', 'vendor')} <select name="vendor">${opts(vendorNames, p.vendor || '', true)}</select></label>
-              <label style="position:relative">${lbl('Currency', 'currency')}
+              <div class="pd-field">${lbl('Vendor', 'vendor')}
+                <input id="venSearch" autocomplete="off" spellcheck="false" placeholder="Search vendors…" value="${esc(vendorLabelOf(p.vendor))}">
+                <input type="hidden" name="vendor" value="${esc(p.vendor || '')}">
+                <div class="curList" id="venList" hidden></div>
+              </div>
+              <div class="pd-field">${lbl('Currency', 'currency')}
                 <input id="curSearch" autocomplete="off" spellcheck="false" value="${esc(currencyLabel(p.currency || 'INR'))}">
                 <input type="hidden" name="currency" value="${esc(p.currency || 'INR')}">
                 <div class="curList" id="curList" hidden></div>
-              </label>
+              </div>
               <label>${lbl('Priority', 'priority', true)} <select name="priority">${opts(list(s, 'priorities'), p.priority || 'Medium')}</select></label>
               <label>${lbl('Expected delivery', 'expected')} <input name="expectedDate" type="date" value="${esc((p.expectedDate || '').slice(0, 10))}"></label>
               ${staff ? `
@@ -197,36 +204,75 @@ export function prFormView(el, s, editId) {
   [...rowsEl.children].forEach(wireRow);
   renderTotal();
 
-  // Currency combobox: search input drives the visible list; the hidden
-  // [name=currency] input holds the committed ISO code the form submits.
-  const curInput = el.querySelector('#curSearch');
-  const curHidden = form.querySelector('[name="currency"]');
-  const curList = el.querySelector('#curList');
-  const showCur = q => {
-    const rows = searchCurrencies(q).slice(0, 30);
-    curList.innerHTML = rows.map(c =>
-      `<div class="curOpt" data-code="${esc(c.code)}"><b>${esc(c.code)}</b> ${esc(c.name)}<span>${esc(c.sym || '')}</span></div>`
-    ).join('') || '<div class="curEmpty">No currency matches</div>';
-    curList.hidden = false;
+  // Searchable combobox: the visible input drives the option list; the hidden
+  // input holds the committed value the form submits. Options render as
+  // {value, main, name, sub}. resolve(text) maps typed text to a value (or
+  // null to snap back); toLabel(value) formats the committed display text.
+  const wireCombo = (inputId, listId, hiddenName, { search, resolve, toLabel, allowEmpty, onCommit }) => {
+    const input = el.querySelector('#' + inputId);
+    const listBox = el.querySelector('#' + listId);
+    const hidden = form.querySelector(`[name="${hiddenName}"]`);
+    const done = () => { if (onCommit) onCommit(); };
+    const show = q => {
+      const rows = search(q).slice(0, 30);
+      listBox.innerHTML = rows.map(r =>
+        `<div class="curOpt" data-v="${esc(r.value)}"><b>${esc(r.main)}</b> ${esc(r.name || '')}<span>${esc(r.sub || '')}</span></div>`
+      ).join('') || '<div class="curEmpty">No match</div>';
+      listBox.hidden = false;
+    };
+    input.onfocus = () => { input.select(); show(''); };
+    input.oninput = () => show(input.value);
+    listBox.onmousedown = e => {
+      e.preventDefault(); // keep focus in the input — no blur/refocus loop
+      const opt = e.target.closest('.curOpt');
+      if (!opt) return;
+      hidden.value = opt.dataset.v;
+      input.value = toLabel(opt.dataset.v);
+      listBox.hidden = true;
+      done();
+    };
+    input.onblur = () => setTimeout(() => {
+      listBox.hidden = true;
+      const t = input.value.trim();
+      if (!t && allowEmpty) hidden.value = '';
+      else {
+        const v = resolve(t);
+        if (v != null) hidden.value = v;
+      }
+      input.value = toLabel(hidden.value);
+      done();
+    }, 120);
   };
-  curInput.onfocus = () => { curInput.select(); showCur(''); };
-  curInput.oninput = () => showCur(curInput.value);
-  curList.onmousedown = e => {   // mousedown: runs before the input's blur
-    const opt = e.target.closest('.curOpt');
-    if (!opt) return;
-    curHidden.value = opt.dataset.code;
-    curInput.value = currencyLabel(opt.dataset.code);
-    curList.hidden = true;
-    renderTotal();
+
+  wireCombo('curSearch', 'curList', 'currency', {
+    search: q => searchCurrencies(q).map(c => ({ value: c.code, main: c.code, name: c.name, sub: c.sym || '' })),
+    resolve: t => {
+      const code = t.split('—')[0].trim().toUpperCase(); // accept a typed bare code
+      return isCurrency(code) ? code : null;
+    },
+    toLabel: v => currencyLabel(v),
+    onCommit: renderTotal
+  });
+
+  const vendorSearch = q => {
+    const t = String(q || '').trim().toLowerCase();
+    return deptVendors
+      .filter(v => !t || v.name.toLowerCase().includes(t)
+        || (v.displayName || '').toLowerCase().includes(t)
+        || (v.category || '').toLowerCase().includes(t))
+      .sort((a, b) => (a.displayName || a.name).localeCompare(b.displayName || b.name))
+      .map(v => ({ value: v.name, main: v.displayName || v.name, name: v.displayName ? v.name : '', sub: v.category || '' }));
   };
-  curInput.onblur = () => setTimeout(() => {
-    curList.hidden = true;
-    // accept a typed bare code ("aed"); anything else snaps back to committed
-    const code = curInput.value.split('—')[0].trim().toUpperCase();
-    if (isCurrency(code)) curHidden.value = code;
-    curInput.value = currencyLabel(curHidden.value);
-    renderTotal();
-  }, 150);
+  wireCombo('venSearch', 'venList', 'vendor', {
+    search: vendorSearch,
+    resolve: t => {
+      const hit = deptVendors.find(v => v.name.toLowerCase() === t.toLowerCase()
+        || (v.displayName || '').toLowerCase() === t.toLowerCase());
+      return hit ? hit.name : null;
+    },
+    toLabel: v => vendorLabelOf(v),
+    allowEmpty: true // vendor is optional
+  });
 
   el.querySelector('#addItem').onclick = () => {
     rowsEl.insertAdjacentHTML('beforeend', itemRowHtml(s, {}, rowsEl.children.length, typeNames, showZoho));
