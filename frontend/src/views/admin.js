@@ -145,9 +145,8 @@ function usersSection(s) {
           ${[...USERS].sort((a, b) => (a.role ? 1 : 0) - (b.role ? 1 : 0)).map(u => `<tr>
             <td>
               <div class="adm-user">
-                ${u.picture
-                  ? `<img class="adm-avatar" src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">`
-                  : `<div class="adm-avatar" style="background:${avatarBg(u.email)}">${esc(initials(u.email))}</div>`}
+                <div class="adm-avatar" style="background:${avatarBg(u.email)}">${esc(initials(u.email))}${
+                  u.picture ? `<img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()">` : ''}</div>
                 <div>
                   <div class="adm-name">${esc(u.name || displayName(u.email))}</div>
                   <div class="adm-email">${esc(u.email)}</div>
