@@ -8,7 +8,7 @@ import { searchCurrencies, isCurrency, currencyLabel } from '../lib/currencies.j
 
 const PAYMENTS = ['Unpaid', 'Paid', 'Partially Paid', 'FOC / Free'];
 const FALLBACK = {
-  priorities: ['High', 'Medium', 'Low'],
+  priorities: ['Critical', 'High', 'Medium', 'Low'],
   couriers: ['BlueDart', 'DHL', 'FedEx', 'DTDC', 'India Post', 'Other'],
   departments: [], materialTypes: [], paymentTerms: [], units: []
 };
@@ -21,7 +21,7 @@ const HINTS = {
   purpose: 'One line on why this purchase is needed, e.g. “Calibration jigs for the EnvizomPro batch”.',
   vendor: 'The registered vendor you’ll buy from. Only vendors mapped to your department appear — an admin can register new ones.',
   currency: 'Currency of the vendor’s quote. Type to search any world currency by code, name or symbol.',
-  priority: 'How urgent: High = blocking work now, Medium = needed soon, Low = whenever convenient.',
+  priority: 'Critical = must-have immediately, expedite even at extra cost. High = procure as soon as possible. Medium = needed within the normal purchase cycle. Low = procure when budget allows.',
   expected: 'Date you expect the goods to arrive — used for the In-Transit tracking on the dashboard.',
   payment: 'Whether the vendor has been paid. Usually Unpaid when raising the request.',
   notes: 'Anything the approver or purchase team should know — links, context, constraints.',
@@ -34,8 +34,10 @@ const HINTS = {
   iLink: 'URL of the exact product page / variant you want ordered.',
   iDoc: 'Datasheet or spec document URL, if relevant.'
 };
-const lbl = (text, hintKey) => `<span class="lblrow">${esc(text)}${
-  HINTS[hintKey] ? `<span class="hq" data-tip="${esc(HINTS[hintKey])}">?</span>` : ''}</span>`;
+// edge=true anchors the tooltip to the icon's right edge — for fields in the
+// last grid column, where a left-anchored bubble clips at the card boundary
+const lbl = (text, hintKey, edge) => `<span class="lblrow">${esc(text)}${
+  HINTS[hintKey] ? `<span class="hq ${edge ? 'r' : ''}" data-tip="${esc(HINTS[hintKey])}">?</span>` : ''}</span>`;
 
 // Keep a stored value selectable even if it's not in the list (e.g. legacy data),
 // otherwise saving silently rewrites it to the first <option>.
@@ -122,7 +124,7 @@ export function prFormView(el, s, editId) {
                 <input type="hidden" name="currency" value="${esc(p.currency || 'INR')}">
                 <div class="curList" id="curList" hidden></div>
               </label>
-              <label>${lbl('Priority', 'priority')} <select name="priority">${opts(list(s, 'priorities'), p.priority || 'Medium')}</select></label>
+              <label>${lbl('Priority', 'priority', true)} <select name="priority">${opts(list(s, 'priorities'), p.priority || 'Medium')}</select></label>
               <label>${lbl('Expected delivery', 'expected')} <input name="expectedDate" type="date" value="${esc((p.expectedDate || '').slice(0, 10))}"></label>
               ${staff ? `
               <label>${lbl('Payment status*', 'payment')} <select name="paymentStatus" required>${opts(PAYMENTS, p.paymentStatus || 'Unpaid')}</select></label>` : ''}
@@ -159,8 +161,8 @@ export function prFormView(el, s, editId) {
               <span>${lbl('Qty*', 'iQty')}</span>
               <span>${lbl('Unit*', 'iUnit')}</span>
               <span>${lbl('Unit price', 'iPrice')}</span>
-              <span>${lbl('Purchase link', 'iLink')}</span>
-              <span>${lbl('Datasheet', 'iDoc')}</span>
+              <span>${lbl('Purchase link', 'iLink', true)}</span>
+              <span>${lbl('Datasheet', 'iDoc', true)}</span>
               <span></span>
             </div>
             <div id="itemRows">${items.map((it, i) => itemRowHtml(s, it, i, typeNames, showZoho)).join('')}</div>

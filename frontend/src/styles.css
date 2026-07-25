@@ -236,6 +236,7 @@ span.adm-chip{cursor:default;padding:2px 8px;font-size:11px}
   background:#152735;color:#fff;padding:9px 11px;border-radius:8px;font-size:11px;font-weight:400;line-height:1.45;
   letter-spacing:0;text-transform:none;opacity:0;pointer-events:none;transition:opacity .12s}
 .hq:hover::after{opacity:1}
+.hq.r::after{left:auto;right:-8px}
 .curList{position:absolute;top:100%;left:0;right:0;max-height:230px;overflow:auto;background:#fff;z-index:50;
   border:1px solid var(--adm-outline);border-radius:8px;box-shadow:0 8px 24px -4px rgba(21,39,53,.18)}
 .curOpt{display:flex;gap:8px;align-items:baseline;padding:8px 12px;cursor:pointer;font-size:13px;

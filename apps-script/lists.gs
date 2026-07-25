@@ -11,7 +11,7 @@ var LISTS_SEED = {
   departments: ['Admin', 'Device Management', 'Environment', 'Marketing', 'Production',
     'Projects', 'QC', 'R&D', 'Sales', 'Support'],
   materialTypes: ['Asset', 'Inventory', 'Local Purchase', 'Subscription', 'Certification'],
-  priorities: ['High', 'Medium', 'Low'],
+  priorities: ['Critical', 'High', 'Medium', 'Low'],
   couriers: ['BlueDart', 'DHL', 'FedEx', 'DTDC', 'India Post', 'Amazon', 'Porter', 'Delhivery', 'Other'],
   paymentTerms: ['Advance 100%', 'Advance 50%', 'Net 15', 'Net 30', 'On Delivery', 'Milestone'],
   units: ['pcs', 'L', 'kg', 'm', 'set', 'box', 'license']
