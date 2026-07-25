@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction B — Bento · Oizom Procurement Hub · Desktop</title>
+<style>
+/* ============================================================
+   DIRECTION B — BENTO · "THE INSTRUMENT DECK"
+   Self-contained. System fonts only. No network requests.
+   ============================================================ */
+
+/* ---------- 1. TOKENS ------------------------------------- */
+:root{
+  /* plane */
+  --deck:#EDF1EE;        /* page plane */
+  --block:#FFFFFF;       /* block surface */
+  --sunk:#F7FAF8;        /* recessed field / sub-surface */
+  --rail:#0F1C17;        /* dark instrument rail */
+  --rail-2:#182C24;
+
+  /* ink */
+  --ink:#0F1C17;         /* 17.5:1 on block */
+  --ink-2:#43544B;       /* 8.05:1 */
+  --ink-3:#63756B;       /* 4.90:1 — floor for small text */
+  --on-rail:#D8E4DE;     /* 13.4:1 on rail */
+  --on-rail-2:#93A69C;   /* 6.82:1 on rail */
+
+  /* structure */
+  --rule:#D5DFD9;        /* DECORATIVE hairline only (1.36:1) */
+  --edge:#748A80;        /* INTERACTIVE boundary — 3.69:1 white, 3.24:1 deck */
+  --focus:#0F5FD1;       /* focus ring — 5.87:1 white */
+
+  /* the one green: brand === "done" */
+  --brand:#0B6B4F;       /* 6.50:1 on white, white-on-brand 6.50:1 */
+  --brand-wash:#DDEFE7;
+
+  /* status kinds — HUE encodes KIND, icon+label encode IDENTITY */
+  --wait-ink:#835000;  --wait-mark:#B87400;  --wait-wash:#FBEFD8;   /* Submitted */
+  --move-ink:#1B5292;  --move-mark:#1F5FA8;  --move-wash:#E3ECF8;   /* Approved · Ordered · In Transit */
+  --done-ink:#0B6046;  --done-mark:#0B6B4F;  --done-wash:#DDEFE7;   /* Received */
+  --stop-ink:#9A1C2E;  --stop-mark:#A81F35;  --stop-wash:#FAE3E4;   /* On Hold · Rejected */
+  --shut-ink:#4C5B54;  --shut-mark:#6B7A72;  --shut-wash:#E7ECE9;   /* Cancelled */
+
+  /* type */
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+
+  /* scale — 6 sizes, no half-pixels */
+  --t-micro:11px; --t-small:12px; --t-body:14px; --t-lead:17px; --t-fig:22px; --t-hero:34px;
+
+  /* space — 4-base */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+
+  /* radius — exactly 3 */
+  --r-ctl:6px; --r-block:12px; --r-pill:999px;
+
+  /* elevation — exactly 2 */
+  --e-flat:inset 0 0 0 1px var(--rule);
+  --e-raised:0 1px 2px rgba(15,28,23,.06),0 10px 28px -14px rgba(15,28,23,.28);
+
+  /* grid */
+  --cols:12; --gap:12px; --u:84px;   /* U = the row unit */
+}
+
+/* ---------- 2. RESET / BASE ------------------------------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--deck);color:var(--ink);
+  font:400 var(--t-body)/1.45 var(--sans);
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3,h4{font-weight:600;line-height:1.2}
+a{color:var(--brand)}
+button,input,select,textarea{font:inherit;color:inherit}
+svg{display:block}
+
+/* Focus: one rule, everywhere, never clipped. */
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-ctl)}
+:focus:not(:focus-visible){outline:none}
+
+.skip{position:absolute;left:-9999px;top:0;z-index:99;background:var(--block);
+  padding:var(--s3) var(--s4);border-radius:0 0 var(--r-ctl) 0;font-weight:600}
+.skip:focus{left:0}
+
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- 3. TYPE ROLES --------------------------------- */
+/* THE RULE: mono = a value the system stores verbatim.
+             sans = a human wrote it.                          */
+.v{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.lab{                        /* the ONE micro-label style */
+  font-size:var(--t-micro);line-height:1.1;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.note{font-size:var(--t-small);color:var(--ink-3);line-height:1.4}
+.prose{overflow-wrap:anywhere;hyphens:auto}
+
+/* ---------- 4. THE GRID SYSTEM ---------------------------- */
+/* 12 columns. Column span is FIXED per block type.
+   Row span is a FLOOR, not a cage: minmax(u,auto) lets the
+   messy row grow instead of clipping.                        */
+.bento{
+  display:grid;
+  grid-template-columns:repeat(var(--cols),minmax(0,1fr));
+  grid-auto-rows:minmax(var(--u),auto);
+  gap:var(--gap);
+  align-items:stretch;
+}
+.blk{
+  background:var(--block);border-radius:var(--r-block);
+  box-shadow:var(--e-flat);
+  padding:var(--s4);
+  display:flex;flex-direction:column;gap:var(--s3);
+  min-width:0;                 /* overflow contract: every block */
+  position:relative;
+}
+.blk>*{min-width:0}
+.blk--raised{box-shadow:var(--e-raised),var(--e-flat)}
+.blk--sunk{background:var(--sunk)}
+.blk--rail{background:var(--rail);color:var(--on-rail);box-shadow:none}
+
+/* block size vocabulary */
+.t1{grid-column:span 3;grid-row:span 1}   /* Tile   — one honest figure */
+.t2{grid-column:span 3;grid-row:span 2}   /* Gauge  — figure + micro-viz */
+.t3{grid-column:span 6;grid-row:span 3}   /* Panel  — a list / small multiple */
+.t3-narrow{grid-column:span 4;grid-row:span 3}
+.t4{grid-column:span 6;grid-row:span 4}   /* Focus  — max ONE per view */
+.t5{grid-column:span 12}                  /* Ledger — row span content-driven */
+.t-half{grid-column:span 6}
+.t-third{grid-column:span 4}
+.t-full{grid-column:span 12}
+
+.blk-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3)}
+.blk-head h2,.blk-head h3{font-size:var(--t-small);font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3)}
+/* Rule 2 of the grid: a block that aggregates MUST state its population. */
+.pop{font-size:var(--t-micro);color:var(--ink-3);line-height:1.35;
+  border-top:1px dashed var(--rule);padding-top:var(--s2);margin-top:auto}
+
+.fig{font-size:var(--t-hero);font-weight:700;line-height:1;letter-spacing:-.02em;font-family:var(--mono)}
+.fig-sm{font-size:var(--t-fig);font-weight:700;line-height:1;font-family:var(--mono)}
+
+/* ---------- 5. STATUS: AXIS ONE (hue = kind) -------------- */
+.st{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:3px 9px 3px 6px;border-radius:var(--r-pill);
+  font-size:var(--t-small);font-weight:600;white-space:nowrap;
+  border:1px solid transparent;
+}
+.st svg{width:14px;height:14px;flex:none}
+.st--wait{background:var(--wait-wash);color:var(--wait-ink);border-color:rgba(131,80,0,.22)}
+.st--move{background:var(--move-wash);color:var(--move-ink);border-color:rgba(27,82,146,.22)}
+.st--done{background:var(--done-wash);color:var(--done-ink);border-color:rgba(11,96,70,.22)}
+.st--stop{background:var(--stop-wash);color:var(--stop-ink);border-color:rgba(154,28,46,.22)}
+.st--shut{background:var(--shut-wash);color:var(--shut-ink);border-color:rgba(76,91,84,.28)}
+.st-age{font-family:var(--mono);font-weight:600;opacity:.85;font-size:var(--t-micro);
+  padding-left:6px;margin-left:2px;border-left:1px solid currentColor}
+.st-age.hot{opacity:1}
+
+/* ---------- 6. PAYMENT: AXIS TWO (fill, never hue) -------- */
+/* Independent variable => independent encoding channel.
+   Payment is ALWAYS ink-coloured. It can never be mistaken
+   for a status because it never borrows a status hue.        */
+.pay{display:inline-flex;align-items:center;gap:6px;font-size:var(--t-small);
+  font-weight:500;color:var(--ink-2);white-space:nowrap}
+.pay svg{width:13px;height:13px;flex:none;color:var(--ink)}
+.pay--unpaid{color:var(--ink-2)}
+.pay--unpaid svg{color:var(--ink-2)}
+.pay--foc{color:var(--ink-3)}
+.pay--foc svg{color:var(--ink-3)}
+
+/* ---------- 7. PRIORITY (third, quiet channel) ------------ */
+.pri{display:inline-block;width:3px;border-radius:2px;align-self:stretch;min-height:16px}
+.pri--Critical{background:var(--stop-mark)}
+.pri--High{background:var(--wait-mark)}
+.pri--Medium{background:var(--edge)}
+.pri--Low{background:var(--rule)}
+
+/* ---------- 8. CONTROLS ----------------------------------- */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--block);color:var(--ink);
+  border:1px solid var(--edge);border-radius:var(--r-ctl);
+  padding:8px 14px;font-size:var(--t-small);font-weight:600;cursor:pointer;
+  text-decoration:none;min-height:36px;
+}
+.btn:hover{background:var(--sunk)}
+.btn--primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn--primary:hover{background:#095A42}
+.btn--danger{background:var(--block);border-color:var(--stop-mark);color:var(--stop-ink)}
+.btn--danger:hover{background:var(--stop-wash)}
+.btn--sm{padding:5px 10px;min-height:30px;font-size:var(--t-micro)}
+.btn svg{width:15px;height:15px}
+
+.chipbar{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center}
+.fchip{
+  display:inline-flex;align-items:center;gap:6px;background:var(--block);
+  border:1px solid var(--edge);border-radius:var(--r-pill);
+  padding:5px 12px;font-size:var(--t-small);font-weight:600;color:var(--ink-2);cursor:pointer;
+}
+.fchip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.fchip .n{font-family:var(--mono);opacity:.75}
+
+.field{display:flex;flex-direction:column;gap:5px}
+.field>input,.field>select,.field>textarea{
+  background:var(--sunk);border:1px solid var(--edge);border-radius:var(--r-ctl);
+  padding:9px 11px;font-size:var(--t-body);width:100%;min-height:40px;
+}
+.req{color:var(--stop-ink);font-weight:600;letter-spacing:0;text-transform:none}
+
+/* ---------- 9. LEDGER (the record list) ------------------- */
+.ledger-wrap{overflow-x:auto;margin:0 calc(var(--s4)*-1);padding:0 var(--s4)}
+table.ledger{width:100%;border-collapse:collapse;min-width:1000px}
+.ledger caption{text-align:left;font-size:var(--t-micro);color:var(--ink-3);padding-bottom:var(--s2)}
+.ledger th{
+  font-size:var(--t-micro);font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--edge);
+  white-space:nowrap;background:var(--block);
+}
+.ledger th.axes-a{color:var(--move-ink)}
+.ledger th.axes-b{color:var(--ink-2)}
+.ledger td{padding:10px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:var(--t-small)}
+.ledger tbody tr:hover{background:var(--sunk)}
+.ledger tbody tr:focus-within{background:var(--sunk)}
+.ledger .idcell{display:flex;gap:8px;align-items:stretch}
+.ledger .idcell a{font-family:var(--mono);font-weight:600;font-size:var(--t-small);
+  color:var(--ink);text-decoration:none}
+.ledger .idcell a:hover{text-decoration:underline}
+.ledger .sub{color:var(--ink-3);font-size:var(--t-micro);margin-top:2px}
+.itemcell{max-width:270px}
+.itemcell .desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;overflow-wrap:anywhere}
+.vendorcell{max-width:170px;overflow-wrap:anywhere}
+.dash{color:var(--ink-3)}
+
+/* ---------- 10. SMALL MULTIPLES / MICRO-VIZ --------------- */
+.sm{display:flex;flex-direction:column;gap:10px}
+.sm-row{display:grid;grid-template-columns:34px 1fr 96px;gap:10px;align-items:center}
+.sm-cur{font-family:var(--mono);font-size:var(--t-small);font-weight:700;color:var(--ink-2)}
+.sm-track{height:10px;background:var(--sunk);border-radius:3px;box-shadow:inset 0 0 0 1px var(--rule);overflow:hidden}
+.sm-fill{height:100%;background:var(--move-mark);border-radius:3px}
+.sm-amt{font-family:var(--mono);font-size:var(--t-small);text-align:right;font-weight:600}
+.sm-cnt{font-family:var(--mono);font-size:var(--t-micro);color:var(--ink-3)}
+
+/* pipeline distribution — segmented bar, 2px surface gaps */
+.pipe{display:flex;gap:2px;height:26px;border-radius:4px;overflow:hidden;background:var(--deck)}
+.pipe span{display:flex;align-items:center;justify-content:center;font-size:var(--t-micro);
+  font-weight:700;color:#fff;font-family:var(--mono)}
+.pipe .p-wait{background:var(--wait-mark)}
+.pipe .p-move{background:var(--move-mark)}
+.pipe .p-done{background:var(--done-mark)}
+.pipe .p-stop{background:var(--stop-mark)}
+.pipe .p-shut{background:var(--shut-mark)}
+.pipe-key{display:flex;flex-wrap:wrap;gap:4px 14px}
+.pipe-key li{display:flex;align-items:center;gap:6px;font-size:var(--t-small);list-style:none;color:var(--ink-2)}
+.pipe-key .sw{width:9px;height:9px;border-radius:2px;flex:none}
+.pipe-key .kn{font-family:var(--mono);font-weight:700;margin-left:auto;color:var(--ink)}
+
+/* age strip — a distribution, not a number */
+.agestrip{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.agestrip div{padding:6px 8px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--rule)}
+.agestrip div:first-child{border-radius:4px 0 0 4px}
+.agestrip div:last-child{border-radius:0 4px 4px 0}
+.agestrip .hit{background:var(--wait-wash);box-shadow:inset 0 0 0 1px rgba(131,80,0,.3)}
+.agestrip b{display:block;font-family:var(--mono);font-size:var(--t-lead);line-height:1.1}
+.agestrip span{font-size:10px;color:var(--ink-3);letter-spacing:.03em}
+
+/* ---------- 11. FOCUS BLOCK (the signature) --------------- */
+.focusblk{background:var(--block);border-radius:var(--r-block);
+  box-shadow:var(--e-raised),inset 0 0 0 1px var(--rule),inset 4px 0 0 var(--stop-mark);
+  padding:var(--s4) var(--s4) var(--s4) var(--s5);
+  display:flex;flex-direction:column;gap:var(--s3)}
+.fcase{display:grid;grid-template-columns:1fr auto;gap:var(--s3);
+  padding:var(--s3);border-radius:var(--r-ctl);background:var(--sunk);
+  box-shadow:inset 0 0 0 1px var(--rule)}
+.fcase-why{font-size:var(--t-small);color:var(--ink-2);overflow-wrap:anywhere}
+.fcase h4{font-size:var(--t-body);font-weight:600}
+.fcase h4 a{color:var(--ink);text-decoration:none;font-family:var(--mono)}
+.fcase h4 a:hover{text-decoration:underline}
+.fcase-act{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.fcase-meta{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s3);align-items:center}
+/* the signature block gets the one non-micro heading on the page */
+.focusblk>.blk-head h2{font-size:var(--t-lead);font-weight:700;text-transform:none;
+  letter-spacing:-.01em;color:var(--ink)}
+
+/* ---------- 12. TOP RAIL ---------------------------------- */
+.rail{background:var(--rail);color:var(--on-rail);position:sticky;top:0;z-index:20}
+.rail-in{max-width:1320px;margin:0 auto;padding:10px var(--s5);
+  display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap}
+.mark{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:-.01em;color:#fff}
+.mark .dot{width:22px;height:22px;border-radius:6px;background:var(--brand);
+  display:grid;place-items:center;color:#fff;font-size:11px;font-weight:800;font-family:var(--mono)}
+.rail nav{display:flex;gap:2px}
+.rail nav a{color:var(--on-rail);text-decoration:none;padding:7px 12px;border-radius:var(--r-ctl);
+  font-size:var(--t-small);font-weight:600}
+.rail nav a[aria-current="page"]{background:var(--rail-2);color:#fff;box-shadow:inset 0 -2px 0 var(--brand)}
+.rail nav a:hover{background:var(--rail-2);color:#fff}
+.railsearch{flex:1;min-width:180px;max-width:340px;display:flex;align-items:center;gap:8px;
+  background:var(--rail-2);border:1px solid #2A4036;border-radius:var(--r-ctl);padding:0 10px}
+.railsearch input{background:none;border:none;outline:none;color:#fff;padding:8px 0;width:100%;font-size:var(--t-small)}
+.railsearch input::placeholder{color:var(--on-rail-2)}
+.railsearch svg{width:15px;height:15px;color:var(--on-rail-2);flex:none}
+.railbtn{background:none;border:1px solid transparent;color:var(--on-rail);border-radius:var(--r-ctl);
+  padding:7px;cursor:pointer;display:grid;place-items:center;min-width:36px;min-height:36px;position:relative}
+.railbtn:hover{background:var(--rail-2);color:#fff}
+.railbtn svg{width:18px;height:18px}
+.railbtn .badge{position:absolute;top:2px;right:2px;background:var(--stop-mark);color:#fff;
+  border-radius:var(--r-pill);font-size:9px;font-weight:700;padding:1px 4px;font-family:var(--mono)}
+.railwho{display:flex;align-items:center;gap:8px;font-size:var(--t-small);font-weight:600;color:#fff}
+.railwho .av{width:28px;height:28px;border-radius:var(--r-pill);background:var(--brand-wash);
+  color:var(--brand);display:grid;place-items:center;font-size:11px;font-weight:700}
+
+/* ---------- 13. PAGE SHELL / VIEW TABS -------------------- */
+.page{max-width:1320px;margin:0 auto;padding:var(--s5)}
+.viewtabs{display:flex;gap:var(--s2);flex-wrap:wrap;margin-bottom:var(--s4);
+  background:var(--block);padding:6px;border-radius:var(--r-block);box-shadow:var(--e-flat);width:fit-content}
+.viewtab{background:none;border:1px solid transparent;border-radius:var(--r-ctl);padding:8px 14px;
+  font-size:var(--t-small);font-weight:600;color:var(--ink-2);cursor:pointer;min-height:36px}
+.viewtab[aria-selected="true"]{background:var(--ink);color:#fff}
+.viewtab:hover:not([aria-selected="true"]){background:var(--sunk)}
+
+.viewhead{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s4);
+  flex-wrap:wrap;margin-bottom:var(--s4)}
+.viewhead h1{font-size:var(--t-fig);letter-spacing:-.02em}
+.viewhead .crumb{font-size:var(--t-small);color:var(--ink-3);margin-bottom:2px}
+.viewhead .crumb a{color:var(--ink-3)}
+
+/* ---------- 14. MOCKUP CHROME (not part of the design) ---- */
+.meta{background:#1B2A22;color:#C9D8D1;font-size:var(--t-small);padding:10px var(--s5);
+  border-bottom:1px solid #2A4036}
+.meta b{color:#fff}
+.legendbar{display:flex;flex-wrap:wrap;gap:var(--s3) var(--s5);align-items:center;
+  background:var(--block);border-radius:var(--r-block);box-shadow:var(--e-flat);
+  padding:var(--s3) var(--s4);margin-bottom:var(--s4)}
+.legendbar .lab{margin-right:var(--s1)}
+
+/* ---------- 15. DETAIL-VIEW PIECES ------------------------ */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px var(--s3);align-items:baseline}
+.kv dt{font-size:var(--t-micro);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.kv dd{font-size:var(--t-small);overflow-wrap:anywhere}
+.tl{list-style:none;display:flex;flex-direction:column;gap:0}
+.tl li{display:grid;grid-template-columns:14px 1fr;gap:var(--s3);padding-bottom:var(--s3);position:relative}
+.tl li::before{content:"";position:absolute;left:6px;top:16px;bottom:0;width:1px;background:var(--rule)}
+.tl li:last-child{padding-bottom:0}
+.tl li:last-child::before{display:none}
+.tl .knob{width:13px;height:13px;border-radius:var(--r-pill);margin-top:3px;
+  box-shadow:inset 0 0 0 2px var(--block);background:var(--edge)}
+.tl .knob.now{background:var(--move-mark);box-shadow:inset 0 0 0 2px var(--block),0 0 0 3px var(--move-wash)}
+.tl .knob.pay{background:var(--ink)}
+.tl b{font-size:var(--t-small);font-weight:600;display:block}
+.tl .when{font-size:var(--t-micro);color:var(--ink-3);font-family:var(--mono)}
+.tl .who{font-size:var(--t-small);color:var(--ink-2)}
+
+.itemtbl{width:100%;border-collapse:collapse}
+.itemtbl th{font-size:var(--t-micro);font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-3);text-align:left;padding:6px 10px;border-bottom:1px solid var(--edge);white-space:nowrap}
+.itemtbl td{padding:10px;border-bottom:1px solid var(--rule);font-size:var(--t-small);vertical-align:top}
+.itemtbl tfoot td{border-bottom:none;font-weight:700;padding-top:12px}
+
+/* vendor blocks */
+.vcard{display:flex;flex-direction:column;gap:var(--s3)}
+.vtop{display:flex;gap:10px;align-items:flex-start}
+.vlogo{width:34px;height:34px;border-radius:8px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--rule);
+  display:grid;place-items:center;font-weight:700;font-size:var(--t-small);color:var(--ink-2);flex:none;font-family:var(--mono)}
+.vname{font-weight:600;font-size:var(--t-body);overflow-wrap:anywhere;line-height:1.25}
+.vstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:var(--s2) var(--s3)}
+.vstats b{font-family:var(--mono);font-size:var(--t-lead);font-weight:700;display:block;line-height:1.1}
+.tag{display:inline-block;padding:2px 8px;border-radius:var(--r-ctl);font-size:var(--t-micro);
+  font-weight:600;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--rule);color:var(--ink-2)}
+
+/* hint disclosure — touch + keyboard reachable, zero JS */
+details.hint{display:inline}
+details.hint>summary{
+  display:inline-grid;place-items:center;width:18px;height:18px;border-radius:var(--r-pill);
+  background:var(--sunk);box-shadow:inset 0 0 0 1px var(--edge);color:var(--ink-2);
+  font-size:11px;font-weight:700;cursor:pointer;list-style:none;vertical-align:middle;margin-left:4px;
+}
+details.hint>summary::-webkit-details-marker{display:none}
+details.hint[open]>summary{background:var(--ink);color:#fff;box-shadow:none}
+details.hint>.tip{display:block;margin-top:6px;background:var(--rail);color:var(--on-rail);
+  padding:9px 11px;border-radius:var(--r-ctl);font-size:var(--t-micro);line-height:1.5;
+  font-weight:400;letter-spacing:0;text-transform:none;max-width:38ch}
+
+@media (max-width:1120px){
+  :root{--cols:8}
+  .t3,.t4,.t-half{grid-column:span 8}
+  .t3-narrow,.t-third{grid-column:span 4}
+  .t5,.t-full{grid-column:span 8}
+}
+@media (max-width:760px){
+  :root{--cols:4}
+  .t1,.t2,.t3,.t4,.t5,.t-half,.t-third,.t3-narrow,.t-full{grid-column:span 4}
+  .page{padding:var(--s4)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ICON SPRITE: inline, no network. Status identity lives here, not in colour. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="g-sub"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.6V8l2.4 1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></g>
+    <g id="g-app"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.9 8.2 7 10.3l4.2-4.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g id="g-ord"><rect x="2.6" y="2" width="10.8" height="12" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.2 5.6h5.6M5.2 8h5.6M5.2 10.4h3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="g-tra"><path d="M1.4 4.6h7.2v6.6H1.4zM8.6 7h2.7l2.3 2.3v1.9H8.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="4.6" cy="12.4" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="11.2" cy="12.4" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/></g>
+    <g id="g-rec"><path d="M2 5.2 8 2.2l6 3v5.6l-6 3-6-3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M5.4 7.6 7.4 9.6l3.6-3.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g id="g-hold"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.4 5.6v4.8M9.6 5.6v4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></g>
+    <g id="g-rej"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9.9 6.2H6.6a1.9 1.9 0 0 0 0 3.8h3.4M8.4 4.5 10.3 6.2 8.4 7.9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g id="g-can"><circle cx="8" cy="8" r="6.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.6 11.4 11.4 4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></g>
+    <!-- payment: FILL channel only -->
+    <g id="p-unpaid"><circle cx="8" cy="8" r="5.8" fill="none" stroke="currentColor" stroke-width="1.7"/></g>
+    <g id="p-part"><circle cx="8" cy="8" r="5.8" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 2.2a5.8 5.8 0 0 1 0 11.6z" fill="currentColor"/></g>
+    <g id="p-paid"><circle cx="8" cy="8" r="5.8" fill="currentColor"/></g>
+    <g id="p-foc"><circle cx="8" cy="8" r="5.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-dasharray="2.6 2.2"/><path d="M4.6 11.4 11.4 4.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></g>
+    <g id="i-search"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.6 10.6 14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></g>
+    <g id="i-bell"><path d="M4.2 6.6a3.8 3.8 0 0 1 7.6 0v3l1.2 2H3l1.2-2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.6 12.6a1.5 1.5 0 0 0 2.8 0" fill="none" stroke="currentColor" stroke-width="1.5"/></g>
+    <g id="i-ref"><path d="M13.2 8a5.2 5.2 0 1 1-1.6-3.7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M13.4 2.4v3.2h-3.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g id="i-plus"><path d="M8 3.4v9.2M3.4 8h9.2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g>
+  </defs>
+</svg>
+
+<div class="meta">
+  <b>Direction B — Bento.</b> Static mockup · desktop · 2026-07-25. Data is the fixed set from <b>sample-data.md</b>.
+  Nothing is fetched; the tabs and disclosures are real, the writes are not.
+</div>
+
+<!-- ============ TOP RAIL ============ -->
+<header class="rail">
+  <div class="rail-in">
+    <span class="mark"><span class="dot">OZ</span>Procurement</span>
+    <nav aria-label="Primary">
+      <a href="#/" aria-current="page">Dashboard</a>
+      <a href="#/vendors">Vendors</a>
+      <a href="#/admin">Admin</a>
+    </nav>
+    <div class="railsearch">
+      <svg aria-hidden="true"><use href="#i-search"/></svg>
+      <label class="sr" for="q">Search purchase requests</label>
+      <input id="q" type="search" placeholder="Search PR, vendor, part no…">
+    </div>
+    <a class="btn btn--primary" href="#/new"><svg aria-hidden="true"><use href="#i-plus"/></svg>New PR</a>
+    <button class="railbtn" type="button" aria-label="Refresh data"><svg aria-hidden="true"><use href="#i-ref"/></svg></button>
+    <button class="railbtn" type="button" aria-label="Notifications, 2 unread" aria-expanded="false">
+      <svg aria-hidden="true"><use href="#i-bell"/></svg><span class="badge">2</span>
+    </button>
+    <button class="railwho" type="button" aria-expanded="false" aria-label="Account menu for Meera Patel, approver">
+      <span class="av" aria-hidden="true">MP</span>Meera Patel
+    </button>
+  </div>
+</header>
+
+<main class="page" id="main">
+  <div class="viewtabs" role="tablist" aria-label="Mockup views">
+    <button class="viewtab" role="tab" id="tab-dash" aria-controls="view-dash" aria-selected="true">Dashboard</button>
+    <button class="viewtab" role="tab" id="tab-pr" aria-controls="view-pr" aria-selected="false" tabindex="-1">PR-2026-0142</button>
+    <button class="viewtab" role="tab" id="tab-ven" aria-controls="view-ven" aria-selected="false" tabindex="-1">Vendors</button>
+  </div>
+
+  <section id="view-dash" role="tabpanel" aria-labelledby="tab-dash" tabindex="0">
+
+    <div class="viewhead">
+      <div>
+        <p class="crumb">Signed in as Meera Patel · approver</p>
+        <h1>What needs you, Thursday 25 July</h1>
+      </div>
+      <div class="chipbar">
+        <button class="fchip" type="button" aria-pressed="true">All <span class="n">8</span></button>
+        <button class="fchip" type="button" aria-pressed="false">Raised by me <span class="n">0</span></button>
+        <button class="fchip" type="button" aria-pressed="false">Approved by me <span class="n">3</span></button>
+      </div>
+    </div>
+
+    <!-- Legend: the two axes, stated once, on the page. -->
+    <div class="legendbar">
+      <span class="lab">Two independent axes</span>
+      <span style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="st st--wait"><svg aria-hidden="true"><use href="#g-sub"/></svg>Submitted</span>
+        <span class="st st--move"><svg aria-hidden="true"><use href="#g-app"/></svg>Approved</span>
+        <span class="st st--move"><svg aria-hidden="true"><use href="#g-ord"/></svg>Ordered</span>
+        <span class="st st--move"><svg aria-hidden="true"><use href="#g-tra"/></svg>In Transit</span>
+        <span class="st st--done"><svg aria-hidden="true"><use href="#g-rec"/></svg>Received</span>
+        <span class="st st--stop"><svg aria-hidden="true"><use href="#g-hold"/></svg>On Hold</span>
+        <span class="st st--stop"><svg aria-hidden="true"><use href="#g-rej"/></svg>Rejected</span>
+        <span class="st st--shut"><svg aria-hidden="true"><use href="#g-can"/></svg>Cancelled</span>
+      </span>
+      <span style="display:flex;gap:14px;flex-wrap:wrap;border-left:1px solid var(--rule);padding-left:var(--s4)">
+        <span class="pay pay--unpaid"><svg aria-hidden="true"><use href="#p-unpaid"/></svg>Unpaid</span>
+        <span class="pay"><svg aria-hidden="true"><use href="#p-part"/></svg>Partially Paid</span>
+        <span class="pay"><svg aria-hidden="true"><use href="#p-paid"/></svg>Paid</span>
+        <span class="pay pay--foc"><svg aria-hidden="true"><use href="#p-foc"/></svg>FOC / Free</span>
+      </span>
+      <p class="note" style="flex-basis:100%">
+        Colour groups statuses by <b>who owns the next move</b> — amber&nbsp;= waiting on a person,
+        blue&nbsp;= moving on its own, green&nbsp;= done, red&nbsp;= stopped, slate&nbsp;= closed.
+        The icon and the word carry the identity; colour never carries it alone.
+        Payment is drawn only as <b>fill</b>, never as hue, so the two axes cannot be confused.
+      </p>
+    </div>
+
+    <div class="bento">
+
+      <!-- ===== FOCUS BLOCK — the signature. Max one per view; must be earned. ===== -->
+      <section class="focusblk t4" aria-labelledby="h-focus">
+        <div class="blk-head">
+          <h2 id="h-focus">Waiting on you · 2</h2>
+          <span class="note">oldest first</span>
+        </div>
+
+        <article class="fcase">
+          <div>
+            <h4><a href="#/pr/PR-2026-0141">PR-2026-0141</a> · Enclosure fabrication for Q3 production run</h4>
+            <p class="fcase-why prose">Submitted 3 days ago by Rakesh Chauhan. <b>No approver has picked it up.</b>
+              Production · Dustroid batch 12 · Precision Sheet Metal Works · Net 30.</p>
+            <div class="fcase-meta" style="margin-top:8px">
+              <span class="st st--wait"><svg aria-hidden="true"><use href="#g-sub"/></svg>Submitted<span class="st-age hot">3d</span></span>
+              <span class="pay pay--unpaid"><svg aria-hidden="true"><use href="#p-unpaid"/></svg>Unpaid</span>
+              <span class="v" style="font-weight:700">₹1,84,500.00</span>
+              <span class="tag">High priority</span>
+              <span class="note">2 line items</span>
+            </div>
+          </div>
+          <div class="fcase-act">
+            <button class="btn btn--primary btn--sm" type="button">Approve</button>
+            <button class="btn btn--sm" type="button">Request changes</button>
+            <button class="btn btn--sm" type="button">Put on hold</button>
+          </div>
+        </article>
+
+        <article class="fcase">
+          <div>
+            <h4><a href="#/pr/PR-2026-0138">PR-2026-0138</a> · LTE modules for Odosense v2</h4>
+            <p class="fcase-why prose">Held for 6 days and <b>no reason was recorded</b> — nobody can tell whether this
+              is still live. R&amp;D · Mouser Electronics.</p>
+            <div class="fcase-meta" style="margin-top:8px">
+              <span class="st st--stop"><svg aria-hidden="true"><use href="#g-hold"/></svg>On Hold<span class="st-age hot">6d</span></span>
+              <span class="pay pay--unpaid"><svg aria-hidden="true"><use href="#p-unpaid"/></svg>Unpaid</span>
+              <span class="v" style="font-weight:700">$2,310.00</span>
+              <span class="tag">High priority</span>
+            </div>
+          </div>
+          <div class="fcase-act">
+            <button class="btn btn--primary btn--sm" type="button">Add hold reason</button>
+            <button class="btn btn--sm" type="button">Return to Submitted</button>
+            <button class="btn btn--sm" type="button">Cancel PR</button>
+          </div>
+        </article>
+
+        <p class="pop">Submitted PRs with no approver, plus anything On Hold or Rejected, ordered by days in
+          that state. When this list is empty the block demotes to a tile — size follows work, not layout.</p>
+      </section>
+
+      <!-- ===== GAUGE — awaiting approval, as a distribution ===== -->
+      <section class="blk t2" aria-labelledby="h-await">
+        <div class="blk-head"><h2 id="h-await">Awaiting approval</h2></div>
+        <p class="fig" style="color:var(--wait-ink)">1</p>
+        <div class="agestrip" role="img" aria-label="Age of submitted PRs: none 0 to 2 days, one 3 to 5 days, none 6 days or more">
+          <div><b>0</b><span>0–2 D</span></div>
+          <div class="hit"><b>1</b><span>3–5 D</span></div>
+          <div><b>0</b><span>6 D +</span></div>
+        </div>
+        <p class="pop">Status = Submitted. Age from last status change, not from creation.</p>
+      </section>
+
+      <!-- ===== GAUGE — in transit, with the thing you actually need ===== -->
+      <section class="blk t2" aria-labelledby="h-transit">
+        <div class="blk-head"><h2 id="h-transit">In transit</h2></div>
+        <p class="fig" style="color:var(--move-ink)">1</p>
+        <p style="font-size:var(--t-small)">
+          <a href="#/pr/PR-2026-0142" class="v" style="font-weight:600">PR-2026-0142</a><br>
+          <span class="note">DHL · AWB <span class="v">7845 2291 0033</span></span><br>
+          <span class="note">Due <span class="v">29 Jul</span> · 4 days out</span>
+        </p>
+        <p class="pop">Status = In Transit. Tracking shown only when an AWB exists.</p>
+      </section>
+
+      <!-- ===== TILES — one honest figure each. No viz, so 1U. ===== -->
+      <section class="blk t1" aria-labelledby="h-open">
+        <div class="blk-head"><h2 id="h-open">Open</h2></div>
+        <p class="fig-sm">5</p>
+        <p class="pop">Not Received, Rejected or Cancelled.</p>
+      </section>
+
+      <section class="blk t1" aria-labelledby="h-recv">
+        <div class="blk-head"><h2 id="h-recv">Received in July</h2></div>
+        <p class="fig-sm" style="color:var(--done-ink)">2 <span style="font-size:var(--t-small);color:var(--ink-3)">of 8</span></p>
+        <p class="pop">Denominator = all 8 PRs raised in July, including the Rejected one.</p>
+      </section>
+
+      <section class="blk t1" aria-labelledby="h-unpaid">
+        <div class="blk-head"><h2 id="h-unpaid">Unpaid</h2></div>
+        <p class="fig-sm">3</p>
+        <p class="note"><span class="v">₹2,52,500.00</span> + <span class="v">$2,310.00</span></p>
+        <p class="pop">Open PRs only. Two currencies, shown apart — never added.</p>
+      </section>
+
+      <section class="blk t1" aria-labelledby="h-hold">
+        <div class="blk-head"><h2 id="h-hold">Stopped</h2></div>
+        <p class="fig-sm" style="color:var(--stop-ink)">2</p>
+        <p class="note">1 On Hold · 1 Rejected</p>
+        <p class="pop">Both are recoverable states, not endings.</p>
+      </section>
+
+      <!-- ===== PANEL — mixed currency, told honestly ===== -->
+      <section class="blk t3" aria-labelledby="h-cur">
+        <div class="blk-head">
+          <h2 id="h-cur">Committed, by currency</h2>
+          <span class="note">4 currencies</span>
+        </div>
+        <div class="sm">
+          <div class="sm-row">
+            <span class="sm-cur">INR</span>
+            <span class="sm-track"><span class="sm-fill" style="width:100%"></span></span>
+            <span><span class="sm-amt">₹3,56,840.00</span><br><span class="sm-cnt">4 PRs</span></span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-cur">EUR</span>
+            <span class="sm-track"><span class="sm-fill" style="width:25%"></span></span>
+            <span><span class="sm-amt">€4,820.00</span><br><span class="sm-cnt">1 PR</span></span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-cur">USD</span>
+            <span class="sm-track"><span class="sm-fill" style="width:25%"></span></span>
+            <span><span class="sm-amt">$2,310.00</span><br><span class="sm-cnt">1 PR</span></span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-cur">GBP</span>
+            <span class="sm-track"><span class="sm-fill" style="width:25%"></span></span>
+            <span><span class="sm-amt">£1,240.00</span><br><span class="sm-cnt">1 PR</span></span>
+          </div>
+        </div>
+        <p style="margin-top:auto">
+          <button class="btn btn--sm" type="button" disabled aria-describedby="fx-why">Show ≈ INR equivalent</button>
+          <span class="note" id="fx-why" style="display:block;margin-top:6px">
+            Unavailable: no exchange rate or rate date is stored against a PR. Enabling this needs a new sheet
+            column, so it is a backend change, not a design one.</span>
+        </p>
+        <p class="pop">7 PRs — every Open or Received request. Excludes PR-2026-0137 (Rejected).
+          <b>Bars show PR count</b>, the only quantity comparable across currencies.
+          Amounts are never summed or converted.</p>
+      </section>
+
+      <!-- ===== PANEL — where the work is ===== -->
+      <section class="blk t3" aria-labelledby="h-pipe">
+        <div class="blk-head">
+          <h2 id="h-pipe">Where the work is</h2>
+          <span class="note">8 PRs</span>
+        </div>
+        <div class="pipe" role="img" aria-label="Distribution: 1 waiting on a person, 3 moving, 2 done, 2 stopped, 0 closed">
+          <span class="p-wait" style="flex:1">1</span>
+          <span class="p-move" style="flex:3">3</span>
+          <span class="p-done" style="flex:2">2</span>
+          <span class="p-stop" style="flex:2">2</span>
+        </div>
+        <ul class="pipe-key">
+          <li><span class="sw" style="background:var(--wait-mark)"></span>Submitted<span class="kn">1</span></li>
+          <li><span class="sw" style="background:var(--move-mark)"></span>Approved<span class="kn">1</span></li>
+          <li><span class="sw" style="background:var(--move-mark)"></span>Ordered<span class="kn">1</span></li>
+          <li><span class="sw" style="background:var(--move-mark)"></span>In Transit<span class="kn">1</span></li>
+          <li><span class="sw" style="background:var(--done-mark)"></span>Received<span class="kn">2</span></li>
+          <li><span class="sw" style="background:var(--stop-mark)"></span>On Hold<span class="kn">1</span></li>
+          <li><span class="sw" style="background:var(--stop-mark)"></span>Rejected<span class="kn">1</span></li>
+          <li><span class="sw" style="background:var(--shut-mark)"></span>Cancelled<span class="kn">0</span></li>
+        </ul>
+        <p class="pop">Segments are the five <b>kinds</b>, not five stages — this is a census of where PRs sit,
+          not a route they travel. On Hold and Rejected have their own segment because they are places a PR
+          really is, not detours off a line.</p>
+      </section>
+
+      <!-- ===== LEDGER ===== -->
+      <section class="blk t5" aria-labelledby="h-ledger">
+        <div class="blk-head">
+          <h2 id="h-ledger">All purchase requests</h2>
+          <div class="chipbar">
+            <button class="fchip" type="button" aria-pressed="true">All <span class="n">8</span></button>
+            <button class="fchip" type="button" aria-pressed="false">Needs action <span class="n">2</span></button>
+            <button class="fchip" type="button" aria-pressed="false">Unpaid <span class="n">3</span></button>
+            <button class="fchip" type="button" aria-pressed="false">Critical &amp; High <span class="n">4</span></button>
+          </div>
+        </div>
+        <div class="ledger-wrap">
+          <table class="ledger">
+            <caption>8 purchase requests, newest first. Priority is the coloured bar beside each ID.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Request</th>
+                <th scope="col">Department · project</th>
+                <th scope="col">Items</th>
+                <th scope="col">Vendor</th>
+                <th scope="col" style="text-align:right">Amount</th>
+                <th scope="col" class="axes-a">Status <span class="sr">(axis 1 of 2)</span></th>
+                <th scope="col" class="axes-b">Payment <span class="sr">(axis 2 of 2)</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="idcell"><span class="pri pri--Critical" title="Critical priority"></span>
+                  <span><a href="#/pr/PR-2026-0142">PR-2026-0142</a><div class="sub">Critical · 21 Jul</div></span></div></td>
+                <td>R&amp;D<div class="sub">Polludrone Gen-5</div></td>
+                <td class="itemcell"><div class="desc prose">SPS30 particulate matter sensor module</div><div class="sub">+2 more · 101 pcs</div></td>
+                <td class="vendorcell">Sensirion AG<div class="sub">Switzerland</div></td>
+                <td class="num">€4,820.00</td>
+                <td><span class="st st--move"><svg aria-hidden="true"><use href="#g-tra"/></svg>In Transit<span class="st-age">4d</span></span>
+                  <div class="sub">due 29 Jul</div></td>
+                <td><span class="pay"><svg aria-hidden="true"><use href="#p-paid"/></svg>Paid</span>
+                  <div class="sub">Advance 50%</div></td>
+              </tr>
+              <tr>
+                <td><div class="idcell"><span class="pri pri--High" title="High priority"></span>
+                  <span><a href="#/pr/PR-2026-0141">PR-2026-0141</a><div class="sub">High · 22 Jul</div></span></div></td>
+                <td>Production<div class="sub">Dustroid batch 12</div></td>
+                <td class="itemcell"><div class="desc prose">Powder-coated aluminium enclosure, IP65, 300×200×120</div><div class="sub">+1 more · 300 pcs</div></td>
+                <td class="vendorcell">Precision Sheet Metal Works<div class="sub">India</div></td>
+                <td class="num">₹1,84,500.00</td>
+                <td><span class="st st--wait"><svg aria-hidden="true"><use href="#g-sub"/></svg>Submitted<span class="st-age hot">3d</span></span>
+                  <div class="sub">approver <span class="dash">—</span></div></td>
+                <td><span class="pay pay--unpaid"><svg aria-hidden="true"><use href="#p-unpaid"/></svg>Unpaid</span>
+                  <div class="sub">Net 30</div></td>
+              </tr>
+              <tr>
+                <td><div class="idcell"><span class="pri pri--Medium" title="Medium priority"></span>
+                  <span><a href="#/pr/PR-2026-0140">PR-2026-0140</a><div class="sub">Medium · 19 Jul</div></span></div></td>
+                <td>QC<div class="sub">Calibration lab</div></td>
+                <td class="itemcell"><div class="desc prose">NABL calibration — reference PM analyser</div><div class="sub">+1 more · 3 pcs</div></td>
+                <td class="vendorcell">NABL Calibration Services<div class="sub">India</div></td>
+                <td class="num">₹68,000.00</td>
+                <td><span class="st st--move"><svg aria-hidden="true"><use href="#g-app"/></svg>Approved<span class="st-age">4d</span></span>
+                  <div class="sub">Meera Patel</div></td>
+                <td><span class="pay pay--unpaid"><svg aria-hidden="true"><use href="#p-unpaid"/></svg>Unpaid</span>
+                  <div class="sub">On Delivery</div></td>
+              </tr>
+              <tr>
+                <td><div class="idcell"><span class="pri pri--Critical" title="Critical priority"></span>
+                  <span><a href="#/pr/PR-2026-0136">PR-2026-0136</a><div class="sub">Critical · 17 Jul</div></span></div></td>
+                <td>Device Management<div class="sub">Fleet retrofit</div></td>
+                <td class="itemcell"><div class="desc prose">Solar panels and charge controllers for 30 field units</div><div class="sub">60 pcs</div></td>
+                <td class="vendorcell">Robu.in<div class="sub">India</div></td>
+                <td class="num">₹95,400.00</td>
+                <td><span class="st st--move"><svg aria-hidden="true"><use href="#g-ord"/></svg>Ordered<span class="st-age">8d</span></span>
+                  <div class="sub">no courier yet</div></td>
+                <td><span class="pay"><svg aria-hidden="true"><use href="#p-part"/></svg>Partially Paid</span>
+                  <div class="sub">Advance 50%</div></td>
+              </tr>
+              <tr>
+                <td><div class="idcell"><span class="pri pri--High" title="High priority"></span>
+                  <span><a href="#/pr/PR-2026-0138">PR-2026-0138</a><div class="sub">High · 16 Jul</div></span></div></td>
+                <td>R&amp;D<div class="sub">Odosense v2</div></td>
+                <td class="itemcell"><div class="desc prose">LTE modules — held, vendor confirming stock</div></td>
+                <td class="vendorcell">Mouser Electronics<div class="sub">USA</div></td>
+                <td class="num">$2,310.00</td>
+                <td><span class="st st--stop"><svg aria-hidden="true"><use href="#g-hold"/></svg>On Hold<span class="st-age hot">6d</span></span>
+                  <div class="sub" style="color:var(--stop-ink);font-weight:600">no reason recorded</div></td>
+                <td><span class="pay pay--unpaid"><svg aria-hidden="true"><use href="#p-unpaid"/></svg>Unpaid</span>
+                  <div class="sub"><span class="dash">—</span></div></td>
+              </tr>
+              <tr>
+                <td><div class="idcell"><span class="pri pri--Low" title="Low priority"></span>
+                  <span><a href="#/pr/PR-2026-0139">PR-2026-0139</a><div class="sub">Low · 14 Jul</div></span></div></td>
+                <td>Support<div class="sub">Field service</div></td>
+                <td class="itemcell"><div class="desc prose">NO2-B43F electrochemical sensor</div><div class="sub">+1 more · 16 pcs</div></td>
+                <td class="vendorcell">Alphasense Ltd<div class="sub">UK</div></td>
+                <td class="num">£1,240.00</td>
+                <td><span class="st st--done"><svg aria-hidden="true"><use href="#g-rec"/></svg>Received<span class="st-age">7d</span></span>
+                  <div class="sub">FedEx · 18 Jul</div></td>
+                <td><span class="pay"><svg aria-hidden="true"><use href="#p-paid"/></svg>Paid</span>
+                  <div class="sub"><span class="dash">—</span></div></td>
+              </tr>
+              <tr>
+                <td><div class="idcell"><span class="pri pri--Medium" title="Medium priority"></span>
+                  <span><a href="#/pr/PR-2026-0137">PR-2026-0137</a><div class="sub">Medium · 12 Jul</div></span></div></td>
+                <td>Marketing<div class="sub">Trade show</div></td>
+                <td class="itemcell"><div class="desc prose">Booth display units for IFAT India</div></td>
+                <td class="vendorcell">Ganesh Enterprise<div class="sub">India</div></td>
+                <td class="num">₹42,700.00</td>
+                <td><span class="st st--stop"><svg aria-hidden="true"><use href="#g-rej"/></svg>Rejected<span class="st-age">10d</span></span>
+                  <div class="sub">can be resubmitted</div></td>
+                <td><span class="pay pay--unpaid"><svg aria-hidden="true"><use href="#p-unpaid"/></svg>Unpaid</span>
+                  <div class="sub"><span class="dash">—</span></div></td>
+              </tr>
+              <tr>
+                <td><div class="idcell"><span class="pri pri--Low" title="Low priority"></span>
+                  <span><a href="#/pr/PR-2026-0135">PR-2026-0135</a><div class="sub">Low · 10 Jul</div></span></div></td>
+                <td>Admin<div class="sub">Office</div></td>
+                <td class="itemcell"><div class="desc prose">Lab consumables and ESD supplies</div></td>
+                <td class="vendorcell">Amazon Business<div class="sub">India</div></td>
+                <td class="num">₹8,940.00</td>
+                <td><span class="st st--done"><svg aria-hidden="true"><use href="#g-rec"/></svg>Received<span class="st-age">12d</span></span>
+                  <div class="sub"><span class="dash">—</span></div></td>
+                <td><span class="pay"><svg aria-hidden="true"><use href="#p-paid"/></svg>Paid</span>
+                  <div class="sub"><span class="dash">—</span></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="pop">Every row carries both axes and a time-in-state. Rows are links, not click-handled
+          <code>&lt;tr&gt;</code>s, so Tab reaches every request. Amounts are right-aligned tabular mono and are
+          never totalled in this column — four currencies live in it.</p>
+      </section>
+
+    </div>
+  </section>
+  <section id="view-pr" role="tabpanel" aria-labelledby="tab-pr" tabindex="0" hidden>
+
+    <div class="viewhead">
+      <div>
+        <p class="crumb"><a href="#/">All PRs</a> / <span class="v">PR-2026-0142</span></p>
+        <h1 class="prose">PM sensor evaluation batch for Gen-5 board bring-up</h1>
+        <p class="note" style="margin-top:4px"><span class="v">PR-2026-0142</span> · R&amp;D · Polludrone Gen-5 · raised by Ankit Shah</p>
+      </div>
+      <div class="chipbar">
+        <button class="btn" type="button">Print</button>
+        <a class="btn" href="#/new/PR-2026-0142">Edit</a>
+      </div>
+    </div>
+
+    <div class="bento">
+
+      <!-- ===== FOCUS BLOCK — state now, then history. Never a stepper. ===== -->
+      <section class="focusblk t4" aria-labelledby="h-now" style="box-shadow:var(--e-raised),inset 0 0 0 1px var(--rule),inset 4px 0 0 var(--move-mark)">
+        <div class="blk-head"><h2 id="h-now">Right now</h2><span class="note">updated 4 days ago</span></div>
+
+        <div class="fcase-meta">
+          <span class="st st--move" style="font-size:var(--t-body);padding:6px 14px 6px 10px">
+            <svg style="width:17px;height:17px" aria-hidden="true"><use href="#g-tra"/></svg>In Transit<span class="st-age">4d</span></span>
+          <span class="pay" style="font-size:var(--t-body)">
+            <svg style="width:16px;height:16px" aria-hidden="true"><use href="#p-paid"/></svg>Paid</span>
+        </div>
+        <p class="prose" style="font-size:var(--t-body)">
+          Shipped by <b>DHL</b> on 21 July, due <b>29 July</b> — 4 days out. Paid in full on 14 July under
+          Advance 50% terms.</p>
+
+        <div class="fcase-meta">
+          <button class="btn btn--primary" type="button">Mark Received</button>
+          <button class="btn" type="button">Put on hold</button>
+          <button class="btn" type="button">Update tracking</button>
+        </div>
+
+        <h3 class="lab" style="margin-top:var(--s2)">History</h3>
+        <ol class="tl">
+          <li><span class="knob now"></span><span><b>In Transit</b><span class="when">21 Jul 2026 · 4 days ago</span>
+            <span class="who">DHL collected · AWB <span class="v">7845 2291 0033</span></span></span></li>
+          <li><span class="knob pay"></span><span><b>Paid in full</b><span class="when">14 Jul 2026</span>
+            <span class="who">Payment axis · balance 50% cleared</span></span></li>
+          <li><span class="knob"></span><span><b>Ordered</b><span class="when">02 Jul 2026</span>
+            <span class="who">PO <span class="v">PO-2026-0311</span> raised by Kevin Andani</span></span></li>
+          <li><span class="knob pay"></span><span><b>Advance 50% paid</b><span class="when">02 Jul 2026</span>
+            <span class="who">Payment axis</span></span></li>
+          <li><span class="knob"></span><span><b>Approved</b><span class="when">01 Jul 2026</span>
+            <span class="who">Meera Patel</span></span></li>
+          <li><span class="knob"></span><span><b>Submitted</b><span class="when">30 Jun 2026</span>
+            <span class="who">Ankit Shah · R&amp;D</span></span></li>
+        </ol>
+
+        <p class="pop">One list, two axes interleaved and labelled. Off-track states — On Hold, Rejected —
+          are events here like any other, so this block reads the same for a PR that stalled as for one
+          that did not. Payment events are marked with the ink dot, never a status colour.</p>
+      </section>
+
+      <!-- ===== GAUGE — money, with the currency named ===== -->
+      <section class="blk t2" aria-labelledby="h-total">
+        <div class="blk-head"><h2 id="h-total">Request total</h2></div>
+        <p class="fig">€4,820.00</p>
+        <p class="note"><b>EUR</b> — euro. Quoted and payable in EUR; not converted anywhere in this tool.</p>
+        <p class="pop">Sum of 3 line totals. Same currency throughout, so this sum is legitimate.</p>
+      </section>
+
+      <!-- ===== GAUGE — delivery ===== -->
+      <section class="blk t2" aria-labelledby="h-del">
+        <div class="blk-head"><h2 id="h-del">Delivery</h2></div>
+        <dl class="kv">
+          <dt>Courier</dt><dd>DHL</dd>
+          <dt>AWB</dt><dd><a href="#" class="v">7845 2291 0033 ↗</a></dd>
+          <dt>Expected</dt><dd class="v">29 Jul 2026</dd>
+          <dt>Received</dt><dd class="dash">—</dd>
+        </dl>
+        <p class="pop">Courier and AWB have no input anywhere in the current app — see the top-10 table in
+          <code>rationale.md</code>. This block shows where they belong; wiring them is engineering.</p>
+      </section>
+
+      <!-- ===== PANEL — the request. Purpose gets the weight, not the ID. ===== -->
+      <section class="blk t3" aria-labelledby="h-req">
+        <div class="blk-head"><h2 id="h-req">The request</h2></div>
+        <p class="prose" style="font-size:var(--t-lead);font-weight:500;line-height:1.35">
+          PM sensor evaluation batch for Gen-5 board bring-up</p>
+        <dl class="kv" style="grid-template-columns:auto 1fr auto 1fr">
+          <dt>Department</dt><dd>R&amp;D</dd>
+          <dt>Project</dt><dd>Polludrone Gen-5</dd>
+          <dt>Vendor</dt><dd><a href="#/vendors/Sensirion%20AG">Sensirion AG</a></dd>
+          <dt>Priority</dt><dd><span class="tag" style="box-shadow:inset 0 0 0 1px var(--stop-mark);color:var(--stop-ink)">Critical</span></dd>
+          <dt>Terms</dt><dd>Advance 50%</dd>
+          <dt>Currency</dt><dd>EUR (€)</dd>
+        </dl>
+        <h3 class="lab">Notes from the requester</h3>
+        <p class="prose" style="font-size:var(--t-small)">Sensirion quoted ex-works Stäfa; DHL account is ours.
+          The SEK-SVM41 kit is a one-off for the bring-up bench and should be tagged as an Asset, not stock.</p>
+        <p class="pop">Notes sit with the request, not under Delivery — a requester writes them for an approver.</p>
+      </section>
+
+      <!-- ===== PANEL — people ===== -->
+      <section class="blk t3" aria-labelledby="h-people">
+        <div class="blk-head"><h2 id="h-people">People</h2></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--s4)">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span class="railwho"><span class="av" style="background:var(--brand-wash);color:var(--brand)">AS</span></span>
+            <div><span class="lab">Requested by</span><div style="font-weight:600">Ankit Shah</div>
+              <div class="note">ankit@oizom.com · 30 Jun 2026</div></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span class="railwho"><span class="av" style="background:var(--move-wash);color:var(--move-ink)">MP</span></span>
+            <div><span class="lab">Approved by</span><div style="font-weight:600">Meera Patel</div>
+              <div class="note">meera@oizom.com · 01 Jul 2026</div></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span class="railwho"><span class="av" style="background:var(--sunk);color:var(--ink-2)">KA</span></span>
+            <div><span class="lab">Ordered by</span><div style="font-weight:600">Kevin Andani</div>
+              <div class="note">kevin@oizom.com · 02 Jul 2026</div></div>
+          </div>
+        </div>
+        <p class="pop">Three roles, one row. An empty role renders as “—” rather than vanishing, so the reader
+          can tell “nobody yet” from “not applicable”.</p>
+      </section>
+
+      <!-- ===== LEDGER — line items ===== -->
+      <section class="blk t5" aria-labelledby="h-items">
+        <div class="blk-head"><h2 id="h-items">Line items · 3</h2><span class="note">101 units across 3 lines</span></div>
+        <div class="ledger-wrap">
+          <table class="itemtbl">
+            <caption class="sr">Line items for PR-2026-0142</caption>
+            <thead><tr>
+              <th scope="col" style="width:34px">#</th>
+              <th scope="col">Description</th>
+              <th scope="col">Part no.</th>
+              <th scope="col">Type</th>
+              <th scope="col" style="text-align:right">Qty</th>
+              <th scope="col" style="text-align:right">Unit price</th>
+              <th scope="col" style="text-align:right">Line total</th>
+              <th scope="col">Links</th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td class="v">1</td>
+                <td class="prose" style="max-width:300px">SPS30 particulate matter sensor module</td>
+                <td class="v">SPS30-2M</td><td>Inventory</td>
+                <td class="num">40 pcs</td><td class="num">€92.00</td><td class="num" style="font-weight:700">€3,680.00</td>
+                <td><a href="#">buy ↗</a> <a href="#">doc ↗</a></td>
+              </tr>
+              <tr>
+                <td class="v">2</td>
+                <td class="prose" style="max-width:300px">SHT45 humidity and temperature sensor</td>
+                <td class="v">SHT45-AD1B</td><td>Inventory</td>
+                <td class="num">60 pcs</td><td class="num">€14.50</td><td class="num" style="font-weight:700">€870.00</td>
+                <td><a href="#">buy ↗</a> <a href="#">doc ↗</a></td>
+              </tr>
+              <tr>
+                <td class="v">3</td>
+                <td class="prose" style="max-width:300px">Sensor evaluation kit, SEK-SVM41</td>
+                <td class="v">SEK-SVM41</td><td>Asset</td>
+                <td class="num">1 set</td><td class="num">€270.00</td><td class="num" style="font-weight:700">€270.00</td>
+                <td><a href="#">buy ↗</a> <span class="dash">—</span></td>
+              </tr>
+            </tbody>
+            <tfoot><tr>
+              <td colspan="6" style="text-align:right">Request total · EUR</td>
+              <td class="num" style="font-size:var(--t-lead)">€4,820.00</td><td></td>
+            </tr></tfoot>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== PROCUREMENT ===== -->
+      <section class="blk t-half" aria-labelledby="h-proc">
+        <div class="blk-head"><h2 id="h-proc">Procurement</h2><span class="note">staff only</span></div>
+        <dl class="kv" style="grid-template-columns:auto 1fr auto 1fr">
+          <dt>PO</dt><dd><span class="v">PO-2026-0311</span> · 02 Jul 2026</dd>
+          <dt>Invoice</dt><dd class="dash">—</dd>
+          <dt>Terms</dt><dd>Advance 50%</dd>
+          <dt>Quotation</dt><dd><a href="#">open ↗</a></dd>
+        </dl>
+        <p class="pop">An approved PR missing a PO or invoice is flagged on the dashboard as
+          “needs procurement detail”. This one is complete, so nothing is flagged.</p>
+      </section>
+
+      <!-- ===== DANGER — demoted to a tile. It is not the terminus of the page. ===== -->
+      <section class="blk t-half blk--sunk" aria-labelledby="h-danger">
+        <div class="blk-head"><h2 id="h-danger" style="color:var(--stop-ink)">Admin actions</h2></div>
+        <p class="note">Deleting removes the request and all 3 line items from every view. It cannot be undone.</p>
+        <div class="field" style="max-width:300px">
+          <label for="delconfirm">Type <span class="v">PR-2026-0142</span> to enable deletion</label>
+          <input id="delconfirm" type="text" autocomplete="off" placeholder="PR-2026-0142">
+        </div>
+        <button class="btn btn--danger" type="button" disabled>Delete permanently</button>
+        <p class="pop">Same block size as Procurement, on a recessed surface — present, findable, and not
+          the loudest thing on the page.</p>
+      </section>
+
+    </div>
+  </section>
+  <section id="view-ven" role="tabpanel" aria-labelledby="tab-ven" tabindex="0" hidden>
+
+    <div class="viewhead">
+      <div>
+        <h1>Vendors</h1>
+        <p class="note" style="margin-top:4px">10 registered · 8 with purchase history. Block size follows
+          outstanding exposure, not alphabetical order.</p>
+      </div>
+      <div class="chipbar">
+        <label class="sr" for="vq">Filter vendors</label>
+        <input id="vq" type="search" placeholder="Filter vendors…"
+          style="background:var(--block);border:1px solid var(--edge);border-radius:var(--r-ctl);padding:8px 11px;min-height:36px;font-size:var(--t-small)">
+        <button class="fchip" type="button" aria-pressed="true">Owing <span class="n">4</span></button>
+        <button class="fchip" type="button" aria-pressed="false">Domestic <span class="n">6</span></button>
+        <button class="fchip" type="button" aria-pressed="false">Foreign <span class="n">4</span></button>
+      </div>
+    </div>
+
+    <div class="bento">
+
+      <!-- LARGE: money is outstanding, so there is something to do here. -->
+      <section class="blk t3-narrow vcard" aria-labelledby="v1">
+        <div class="vtop">
+          <span class="vlogo" aria-hidden="true">PS</span>
+          <div style="min-width:0">
+            <a id="v1" class="vname" href="#/vendors/Precision%20Sheet%20Metal%20Works"
+               style="color:var(--ink);text-decoration:none">Precision Sheet Metal Works</a>
+            <div class="note">Enclosure fabrication · Ahmedabad, India</div>
+          </div>
+          <span class="tag" style="margin-left:auto;background:var(--stop-wash);color:var(--stop-ink);box-shadow:none">OWING</span>
+        </div>
+        <div class="vstats">
+          <div><span class="lab">PRs</span><b>1</b></div>
+          <div><span class="lab">Unpaid</span><b style="color:var(--stop-ink)">1</b></div>
+          <div><span class="lab">Last order</span><b style="font-size:var(--t-body)">22 Jul</b></div>
+        </div>
+        <div>
+          <span class="lab">Spend by currency</span>
+          <div class="sm" style="margin-top:6px">
+            <div class="sm-row"><span class="sm-cur">INR</span>
+              <span class="sm-track"><span class="sm-fill" style="width:100%;background:var(--stop-mark)"></span></span>
+              <span><span class="sm-amt">₹1,84,500.00</span><br><span class="sm-cnt">1 PR · unpaid</span></span></div>
+          </div>
+        </div>
+        <div class="chipbar"><span class="tag">Production</span><span class="tag">Net 30</span></div>
+        <p class="pop">Outstanding money earns 4 columns. Nothing here is decoration — the currency row is the
+          same small-multiple component as the dashboard, so “₹0 for a USD vendor” cannot happen.</p>
+      </section>
+
+      <section class="blk t3-narrow vcard" aria-labelledby="v2">
+        <div class="vtop">
+          <span class="vlogo" aria-hidden="true">ME</span>
+          <div style="min-width:0">
+            <a id="v2" class="vname" href="#/vendors/Mouser%20Electronics" style="color:var(--ink);text-decoration:none">Mouser Electronics</a>
+            <div class="note">Components · USA · mouser.com</div>
+          </div>
+          <span class="tag" style="margin-left:auto;background:var(--stop-wash);color:var(--stop-ink);box-shadow:none">OWING</span>
+        </div>
+        <div class="vstats">
+          <div><span class="lab">PRs</span><b>1</b></div>
+          <div><span class="lab">Unpaid</span><b style="color:var(--stop-ink)">1</b></div>
+          <div><span class="lab">Last order</span><b style="font-size:var(--t-body)">16 Jul</b></div>
+        </div>
+        <div>
+          <span class="lab">Spend by currency</span>
+          <div class="sm" style="margin-top:6px">
+            <div class="sm-row"><span class="sm-cur">USD</span>
+              <span class="sm-track"><span class="sm-fill" style="width:100%;background:var(--stop-mark)"></span></span>
+              <span><span class="sm-amt">$2,310.00</span><br><span class="sm-cnt">1 PR · unpaid</span></span></div>
+          </div>
+        </div>
+        <div class="chipbar"><span class="tag">R&amp;D</span><span class="tag">Long lead times</span></div>
+        <p class="pop">A USD-only vendor reads in USD. The current admin panel prints ₹0 here (audit F-87).</p>
+      </section>
+
+      <section class="blk t3-narrow vcard" aria-labelledby="v3">
+        <div class="vtop">
+          <span class="vlogo" aria-hidden="true">NC</span>
+          <div style="min-width:0">
+            <a id="v3" class="vname" href="#/vendors/NABL%20Calibration%20Services" style="color:var(--ink);text-decoration:none">NABL Calibration Services</a>
+            <div class="note">Certification and calibration · India</div>
+          </div>
+          <span class="tag" style="margin-left:auto;background:var(--stop-wash);color:var(--stop-ink);box-shadow:none">OWING</span>
+        </div>
+        <div class="vstats">
+          <div><span class="lab">PRs</span><b>1</b></div>
+          <div><span class="lab">Unpaid</span><b style="color:var(--stop-ink)">1</b></div>
+          <div><span class="lab">Last order</span><b style="font-size:var(--t-body)">19 Jul</b></div>
+        </div>
+        <div>
+          <span class="lab">Spend by currency</span>
+          <div class="sm" style="margin-top:6px">
+            <div class="sm-row"><span class="sm-cur">INR</span>
+              <span class="sm-track"><span class="sm-fill" style="width:100%;background:var(--stop-mark)"></span></span>
+              <span><span class="sm-amt">₹68,000.00</span><br><span class="sm-cnt">1 PR · on delivery</span></span></div>
+          </div>
+        </div>
+        <div class="chipbar"><span class="tag">QC</span><span class="tag">On Delivery</span></div>
+        <p class="pop">Nothing is owed until receipt, but the exposure is real, so it keeps the large block.</p>
+      </section>
+
+      <!-- MEDIUM: active, settled. -->
+      <section class="blk t2 vcard" aria-labelledby="v4">
+        <div class="vtop"><span class="vlogo" aria-hidden="true">SA</span>
+          <div style="min-width:0"><a id="v4" class="vname" href="#/vendors/Sensirion%20AG" style="color:var(--ink);text-decoration:none">Sensirion AG</a>
+            <div class="note">Switzerland</div></div></div>
+        <div class="vstats">
+          <div><span class="lab">PRs</span><b>1</b></div>
+          <div><span class="lab">Spend</span><b style="font-size:var(--t-body)">€4,820.00</b></div>
+        </div>
+        <p class="note">1 in transit · nothing unpaid</p>
+      </section>
+
+      <section class="blk t2 vcard" aria-labelledby="v5">
+        <div class="vtop"><span class="vlogo" aria-hidden="true">RO</span>
+          <div style="min-width:0"><a id="v5" class="vname" href="#/vendors/Robu.in" style="color:var(--ink);text-decoration:none">Robu.in</a>
+            <div class="note">India · robu.in</div></div></div>
+        <div class="vstats">
+          <div><span class="lab">PRs</span><b>1</b></div>
+          <div><span class="lab">Spend</span><b style="font-size:var(--t-body)">₹95,400.00</b></div>
+        </div>
+        <p class="note"><span class="pay"><svg aria-hidden="true"><use href="#p-part"/></svg>Partially Paid</span> · advance 50%</p>
+      </section>
+
+      <section class="blk t2 vcard" aria-labelledby="v6">
+        <div class="vtop"><span class="vlogo" aria-hidden="true">AL</span>
+          <div style="min-width:0"><a id="v6" class="vname" href="#/vendors/Alphasense%20Ltd" style="color:var(--ink);text-decoration:none">Alphasense Ltd</a>
+            <div class="note">UK · B4 series gas sensors</div></div></div>
+        <div class="vstats">
+          <div><span class="lab">PRs</span><b>1</b></div>
+          <div><span class="lab">Spend</span><b style="font-size:var(--t-body)">£1,240.00</b></div>
+        </div>
+        <p class="note">Settled · received 18 Jul</p>
+      </section>
+
+      <section class="blk t2 vcard" aria-labelledby="v7">
+        <div class="vtop"><span class="vlogo" aria-hidden="true">AB</span>
+          <div style="min-width:0"><a id="v7" class="vname" href="#/vendors/Amazon%20Business" style="color:var(--ink);text-decoration:none">Amazon Business</a>
+            <div class="note">India · amazon.in</div></div></div>
+        <div class="vstats">
+          <div><span class="lab">PRs</span><b>1</b></div>
+          <div><span class="lab">Spend</span><b style="font-size:var(--t-body)">₹8,940.00</b></div>
+        </div>
+        <p class="note">Settled · received 10 Jul</p>
+      </section>
+
+      <section class="blk t2 vcard" aria-labelledby="v8">
+        <div class="vtop"><span class="vlogo" aria-hidden="true">GE</span>
+          <div style="min-width:0"><a id="v8" class="vname" href="#/vendors/Ganesh%20Enterprise" style="color:var(--ink);text-decoration:none">Ganesh Enterprise</a>
+            <div class="note">Local hardware and fabrication, Ahmedabad</div></div></div>
+        <div class="vstats">
+          <div><span class="lab">PRs</span><b>1</b></div>
+          <div><span class="lab">Spend</span><b style="font-size:var(--t-body)">₹0.00</b></div>
+        </div>
+        <p class="note">Only PR was rejected — <span class="v">₹42,700.00</span> requested, none committed.</p>
+      </section>
+
+      <!-- SMALL: registered, no history. An honest empty state, not a padded card. -->
+      <section class="blk t1 vcard blk--sunk" aria-labelledby="v9">
+        <div class="vtop"><span class="vlogo" aria-hidden="true">EI</span>
+          <div style="min-width:0"><a id="v9" class="vname" href="#/vendors/Element14%20India" style="color:var(--ink);text-decoration:none">Element14 India</a>
+            <div class="note">No purchase history yet</div></div></div>
+      </section>
+
+      <section class="blk t1 vcard blk--sunk" aria-labelledby="v10">
+        <div class="vtop"><span class="vlogo" aria-hidden="true">DK</span>
+          <div style="min-width:0"><a id="v10" class="vname" href="#/vendors/DigiKey" style="color:var(--ink);text-decoration:none">DigiKey</a>
+            <div class="note">No purchase history yet</div></div></div>
+      </section>
+
+      <section class="blk t-half blk--sunk">
+        <h2 class="lab">Why the blocks are different sizes</h2>
+        <p class="note">Three sizes, three reasons. <b>4×3</b> — money is outstanding, so there is something to
+          decide; the block has room for the currency breakdown. <b>3×2</b> — real purchase history, nothing
+          owed; the figure is enough. <b>3×1</b> — registered but never used; the honest content is the vendor
+          name and the word “none”, and padding that to card height would be a lie about how much there is to
+          know. Alphabetical order is available in the sort control, but it is not the default, because
+          alphabetical order tells an approver nothing.</p>
+      </section>
+
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('[role="tab"]'));
+  function sel(t){
+    tabs.forEach(function(x){
+      var on=x===t, p=document.getElementById(x.getAttribute('aria-controls'));
+      x.setAttribute('aria-selected',on?'true':'false');
+      x.tabIndex=on?0:-1; p.hidden=!on;
+    });
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click',function(){sel(t)});
+    t.addEventListener('keydown',function(e){
+      var i=tabs.indexOf(t),n=null;
+      if(e.key==='ArrowRight')n=tabs[(i+1)%tabs.length];
+      if(e.key==='ArrowLeft')n=tabs[(i-1+tabs.length)%tabs.length];
+      if(e.key==='Home')n=tabs[0];
+      if(e.key==='End')n=tabs[tabs.length-1];
+      if(n){e.preventDefault();sel(n);n.focus();}
+    });
+  });
+})();
+</script>
+</body>
+</html>
