@@ -252,6 +252,9 @@ span.adm-chip{cursor:default;padding:2px 8px;font-size:11px}
   letter-spacing:0;text-transform:none;opacity:0;pointer-events:none;transition:opacity .12s}
 .hq:hover::after{opacity:1}
 .hq.r::after{left:auto;right:-8px}
+.dash input.combo{padding-right:40px;
+  background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%235c6f7e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position:right 8px center;background-repeat:no-repeat;background-size:1.5em 1.5em}
 .curList{position:absolute;top:100%;left:0;right:0;max-height:230px;overflow:auto;background:#fff;z-index:50;
   border:1px solid var(--adm-outline);border-radius:8px;box-shadow:0 8px 24px -4px rgba(21,39,53,.18)}
 .curOpt{display:flex;gap:8px;align-items:baseline;padding:8px 12px;cursor:pointer;font-size:13px;

@@ -65,7 +65,8 @@ function itemRowHtml(s, it = {}, i = 0, typeNames = [], showZoho = true) {
 }
 
 function collectItems(form) {
-  return [...form.querySelectorAll('.itemrow')].map(row => {
+  // :not(.ithead) — the column-label header row shares the .itemrow grid class
+  return [...form.querySelectorAll('.itemrow:not(.ithead)')].map(row => {
     const get = n => row.querySelector(`[name="${n}"]`).value.trim();
     return {
       description: get('i_description'), partNo: get('i_partNo'),
@@ -122,12 +123,12 @@ export function prFormView(el, s, editId) {
               <label>${lbl('Project*', 'project')} <select name="project" required>${opts(projNames, p.project || '', true)}</select></label>
               <label>${lbl('Purpose', 'purpose')} <input name="purpose" value="${esc(p.purpose)}"></label>
               <div class="pd-field">${lbl('Vendor', 'vendor')}
-                <input id="venSearch" autocomplete="off" spellcheck="false" placeholder="Search vendors…" value="${esc(vendorLabelOf(p.vendor))}">
+                <input id="venSearch" class="combo" autocomplete="off" spellcheck="false" placeholder="Search vendors…" value="${esc(vendorLabelOf(p.vendor))}">
                 <input type="hidden" name="vendor" value="${esc(p.vendor || '')}">
                 <div class="curList" id="venList" hidden></div>
               </div>
               <div class="pd-field">${lbl('Currency', 'currency')}
-                <input id="curSearch" autocomplete="off" spellcheck="false" value="${esc(currencyLabel(p.currency || 'INR'))}">
+                <input id="curSearch" class="combo" autocomplete="off" spellcheck="false" value="${esc(currencyLabel(p.currency || 'INR'))}">
                 <input type="hidden" name="currency" value="${esc(p.currency || 'INR')}">
                 <div class="curList" id="curList" hidden></div>
               </div>
