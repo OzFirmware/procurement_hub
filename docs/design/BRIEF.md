@@ -80,9 +80,18 @@ They coexist rather than replace. Consequences:
   component, styled twice.
 - **Two table treatments** — `.tbl` and `.dash .tbl` / `.adm-tbl`, with
   different padding scales (9px vs 14px vs 24px).
-- Line 25 references `var(--adm-green-bg)` 72 lines before it is declared.
-- Line 208, `.vcard:hover{border-color:var(--disp)}` — `--disp` is a
-  *font-family* value. That hover state silently does nothing.
+- Line 208, `.vcard:hover{border-color:var(--disp)}` — `--disp` holds a
+  *font-family* value (`'Space Grotesk',sans-serif`), which is not a valid
+  colour. This does not make the declaration ignored: an invalid `var()`
+  substitution is "invalid at computed-value time", so `border-color` resets to
+  its initial value, `currentcolor`. `.vcard` inherits `color:var(--ink)`, so
+  hovering a vendor card snaps the border from pale `#DEE7E1` to near-black
+  `#14241C`. Worse than dead — visibly wrong.
+
+**Correction to an earlier draft of this brief:** it claimed that line 25 using
+`var(--adm-green-bg)` 72 lines before its declaration was a bug. It is not.
+Custom properties resolve through the cascade, not source order. The audit
+caught this; it is recorded here so no direction repeats the mistake.
 
 **Responsiveness is a fallback, not a design.** Only three media queries exist.
 The PR form's line-item row is a 9-column CSS grid that collapses to `1fr 1fr`
