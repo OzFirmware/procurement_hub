@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction C — The Docket · Mobile</title>
+<style>
+/* ============================================================
+   DIRECTION C — "THE DOCKET" · mobile
+   Five screens at a real 390 × 844 viewport. Same token set as
+   mockup-desktop.html — nothing is redefined for mobile.
+   No CDN, no webfonts, no network. Opens via file://
+   ============================================================ */
+:root{
+  --page:#F1F4F2; --panel:#FFFFFF; --sunken:#F7F9F8; --rail:#0E1A16; --rail-ink:#C6D6CE;
+  --ink:#101820; --muted:#54635C;
+  --edge:#DDE4E0; --edge-strong:#7E8B84;
+  --go:#0E7B5B; --go-soft:#E3F1EA; --go-ink:#0A6449;
+  --wait:#8A4E00; --wait-soft:#FBEEDC;
+  --stop:#A32218; --stop-soft:#FBE7E4;
+  --hold:#3F5158; --hold-soft:#E8ECEE;
+  --new:#1F4E96; --new-soft:#E4EBF7;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --data:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+  --r-ctl:6px; --r-panel:10px;
+  --e-rest:0 1px 0 rgba(16,24,32,.05);
+  --e-raised:0 -6px 16px -8px rgba(16,24,32,.22);
+  --tap:48px;                    /* every interactive row clears 44px */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#20282B;color:var(--ink);font:400 14px/1.45 var(--ui);padding:var(--s5) 0 var(--s6)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--go);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.mono{font-family:var(--data);font-variant-numeric:tabular-nums}
+.lbl{font:600 11px/1.2 var(--data);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- mockup framing ---------- */
+.sheetnote{color:#C9D6D0;font:600 11px var(--data);letter-spacing:.06em;text-transform:uppercase;
+  padding:0 var(--s5) var(--s4);max-width:1600px;margin:0 auto}
+.sheetnote span{display:block;text-transform:none;letter-spacing:0;font-weight:400;color:#8FA29B;margin-top:4px;
+  font-family:var(--ui);font-size:12px;max-width:70ch}
+.deck{display:flex;gap:var(--s5);padding:0 var(--s5) var(--s5);overflow-x:auto;align-items:flex-start}
+.pane{flex:none}
+.cap{color:#C9D6D0;font:600 12px var(--data);letter-spacing:.05em;margin-bottom:var(--s2);display:flex;gap:var(--s2);align-items:baseline}
+.cap b{background:var(--go);color:#fff;border-radius:4px;padding:1px 6px;font-size:11px}
+.cap i{font-style:normal;font-weight:400;font-family:var(--ui);color:#8FA29B;font-size:11.5px}
+
+/* ---------- the phone ---------- */
+.phone{width:390px;height:844px;background:var(--page);border-radius:34px;border:9px solid #0B0F10;
+  box-shadow:0 18px 40px -18px rgba(0,0,0,.7);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.notch{height:26px;background:var(--panel);display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--s4);font:600 10.5px var(--data);color:var(--muted);flex:none}
+
+/* ---------- app chrome ---------- */
+.appbar{flex:none;background:var(--panel);border-bottom:1px solid var(--edge);
+  display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s3);min-height:52px}
+.appbar .back{width:var(--tap);height:var(--tap);margin-left:-6px;border:0;background:none;cursor:pointer;
+  display:grid;place-items:center;border-radius:var(--r-ctl)}
+.appbar h1{font:600 15px/1.25 var(--ui);flex:1;min-width:0}
+.appbar h1 small{display:block;font:400 11.5px var(--data);color:var(--muted);letter-spacing:.03em}
+.appbar .ghost{min-height:40px;padding:0 var(--s3);border:1px solid var(--edge-strong);background:var(--panel);
+  border-radius:var(--r-ctl);font:600 12.5px var(--ui);cursor:pointer}
+
+/* progress: three steps, and the step names are always visible.
+   Carbon avoids a stepper for out-of-order processes — creation IS
+   in order, so a stepper is honest here and only here. */
+.steps{flex:none;display:flex;background:var(--panel);border-bottom:1px solid var(--edge);padding:0 var(--s3) var(--s2)}
+.steps li{flex:1;list-style:none;padding-top:var(--s2);border-top:3px solid var(--edge);
+  font:600 11px var(--data);letter-spacing:.04em;color:var(--muted)}
+.steps li+li{margin-left:6px}
+.steps li.on{border-top-color:var(--go);color:var(--go-ink)}
+.steps li.done{border-top-color:var(--go)}
+.steps li b{display:block;font:400 10px var(--data);color:var(--muted);letter-spacing:.06em}
+
+.body{flex:1;overflow-y:auto;padding:var(--s4) var(--s3) var(--s6)}
+.body.tight{padding-bottom:120px}
+
+/* ---------- shared bits ---------- */
+.stamp{display:inline-flex;border:1px solid var(--edge-strong);border-radius:var(--r-ctl);overflow:hidden;background:var(--panel)}
+.stamp>div{display:flex;align-items:center;gap:5px;padding:4px 8px;border-right:1px solid var(--edge-strong);
+  font:600 11px var(--data);white-space:nowrap}
+.stamp>div:last-child{border-right:0}
+.stamp .k{font:600 8.5px var(--data);letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.stamp svg{width:10px;height:10px;flex:none}
+.st-go{background:var(--go-soft);color:var(--go-ink)}
+.st-wait{background:var(--wait-soft);color:var(--wait)}
+.st-stop{background:var(--stop-soft);color:var(--stop)}
+.st-hold{background:var(--hold-soft);color:var(--hold)}
+.st-new{background:var(--new-soft);color:var(--new)}
+.st-off{background:var(--sunken);color:var(--muted)}
+.st-unk{background:repeating-linear-gradient(135deg,var(--sunken),var(--sunken) 4px,#EBEFED 4px,#EBEFED 8px);color:var(--muted)}
+
+.band-h{display:flex;align-items:center;gap:var(--s2);margin:var(--s4) 0 var(--s2)}
+.band-h h2{font:600 12.5px var(--ui)}
+.band-h .n{font:700 10.5px var(--data);min-width:18px;height:18px;padding:0 5px;border-radius:4px;
+  display:grid;place-items:center;background:var(--hold-soft);color:var(--hold)}
+.band-h.act .n{background:var(--wait-soft);color:var(--wait)}
+.band-h .why{margin-left:auto;font:400 11px var(--ui);color:var(--muted)}
+
+.dk{display:block;background:var(--panel);border:1px solid var(--edge);border-left:4px solid var(--edge-strong);
+  border-radius:var(--r-panel);box-shadow:var(--e-rest);padding:var(--s3);margin-bottom:var(--s3);
+  text-decoration:none;color:inherit}
+.dk.sp-hold{border-left-color:var(--hold)} .dk.sp-go{border-left-color:var(--go)}
+.dk.sp-wait{border-left-color:var(--wait)} .dk.sp-stop{border-left-color:var(--stop)}
+.dk-id{font:700 12px var(--data)} .dk-amt{font:700 14px var(--data);float:right}
+.dk-ttl{font:600 14px/1.35 var(--ui);margin:2px 0 var(--s2);clear:both}
+.dk-meta{font:400 11.5px var(--ui);color:var(--muted);margin-bottom:var(--s2)}
+.dk-note{margin-top:var(--s2);padding:var(--s2);border-radius:var(--r-ctl);font:400 12px/1.5 var(--ui);border-left:3px solid}
+.dk-note.q{background:var(--stop-soft);border-color:var(--stop);color:#5E1A14}
+.dk-note.g{background:var(--hold-soft);border-color:var(--hold);color:#26343A}
+.dk-note.w{background:var(--wait-soft);border-color:var(--wait);color:#4A2A00}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:var(--tap);
+  padding:0 var(--s4);border:1px solid var(--edge-strong);background:var(--panel);border-radius:var(--r-ctl);
+  font:600 14px var(--ui);cursor:pointer;text-decoration:none;color:var(--ink)}
+.btn.pri{background:var(--go);border-color:var(--go);color:#fff}
+.btn.stop{border-color:var(--stop);color:var(--stop)}
+.btn.wide{width:100%}
+.btn.sm{min-height:40px;font-size:13px;padding:0 var(--s3)}
+
+/* ---------- form ---------- */
+fieldset{border:0}
+legend{font:600 13px var(--ui);margin-bottom:var(--s1)}
+.hint{font:400 12px/1.5 var(--ui);color:var(--muted);margin-bottom:var(--s3)}
+.f{display:block;margin-bottom:var(--s4)}
+.f>.t{display:flex;align-items:baseline;gap:6px;margin-bottom:5px}
+.f>.t .name{font:600 12.5px var(--ui)}
+.f>.t .req{font:600 10px var(--data);letter-spacing:.06em;color:var(--stop);text-transform:uppercase}
+.f>.t .opt{font:400 11.5px var(--ui);color:var(--muted)}
+/* help is inline text, always present. Never a hover-only bubble —
+   the current one is invisible on touch and 1.70:1 anyway (audit #2). */
+.f .help{font:400 11.5px/1.5 var(--ui);color:var(--muted);margin-top:5px}
+.f input,.f select,.f textarea{width:100%;min-height:var(--tap);border:1px solid var(--edge-strong);
+  background:var(--panel);border-radius:var(--r-ctl);padding:0 var(--s3);font:400 15px var(--ui)}
+.f textarea{padding:var(--s3);min-height:88px;resize:vertical;line-height:1.5}
+.f input[inputmode="decimal"],.f input[inputmode="numeric"]{font-family:var(--data);font-variant-numeric:tabular-nums}
+.f .bad input,.f input[aria-invalid="true"]{border-color:var(--stop);border-width:2px;background:#FFF9F8}
+.err{display:flex;gap:6px;align-items:flex-start;margin-top:5px;font:600 12px/1.4 var(--ui);color:var(--stop)}
+.err svg{width:13px;height:13px;flex:none;margin-top:1px}
+.pair{display:grid;grid-template-columns:1fr 118px;gap:var(--s2)}
+.pair .f{margin-bottom:0}
+
+/* selection over typing where the set is closed */
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{min-height:44px;padding:0 var(--s3);border:1px solid var(--edge-strong);background:var(--panel);
+  border-radius:var(--r-ctl);font:600 13px var(--ui);cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--go-soft);border-color:var(--go);color:var(--go-ink);box-shadow:inset 0 0 0 1px var(--go)}
+
+/* context banner: the department that silently scopes three dropdowns
+   is invisible in the current form (audit F-30/F-31). */
+.ctx{display:flex;gap:var(--s2);align-items:flex-start;background:var(--new-soft);border:1px solid #C4D5EE;
+  border-radius:var(--r-panel);padding:var(--s3);margin-bottom:var(--s4);font:400 12.5px/1.5 var(--ui);color:#173D75}
+.ctx svg{width:15px;height:15px;flex:none;margin-top:2px}
+.ctx b{font-weight:600}
+
+/* ---------- item stack ---------- */
+.item{background:var(--panel);border:1px solid var(--edge);border-radius:var(--r-panel);
+  box-shadow:var(--e-rest);margin-bottom:var(--s2);overflow:hidden}
+.item>a{display:flex;gap:var(--s3);align-items:flex-start;padding:var(--s3);min-height:var(--tap);
+  text-decoration:none;color:inherit}
+.item .no{font:700 11px var(--data);color:var(--muted);width:16px;flex:none;padding-top:2px}
+.item .g{flex:1;min-width:0}
+/* Baymard: a collapsed row must be verifiable without opening it.
+   Never "Item 3". */
+.item .d{font:600 13.5px/1.35 var(--ui)}
+.item .s{font:400 11.5px var(--data);color:var(--muted);margin-top:3px}
+.item .lt{font:700 13px var(--data);text-align:right;white-space:nowrap;padding-top:1px}
+.item .chev{width:14px;flex:none;color:var(--muted);padding-top:3px}
+.item .warn{background:var(--wait-soft);color:var(--wait);font:600 11.5px var(--ui);padding:6px var(--s3);
+  border-top:1px solid #EEDCC0;display:flex;gap:6px;align-items:center}
+.item .warn svg{width:12px;height:12px}
+.itembar{display:flex;gap:var(--s2);padding:0 var(--s3) var(--s3)}
+.itembar button{flex:1;min-height:40px;border:1px solid var(--edge-strong);background:var(--panel);
+  border-radius:var(--r-ctl);font:600 12px var(--ui);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:5px}
+.itembar button.del{color:var(--stop);border-color:#D8B7B3}
+.itembar svg{width:12px;height:12px}
+
+/* ---------- sticky action bar: total + primary, in the thumb zone --- */
+.dock{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--edge-strong);
+  box-shadow:var(--e-raised);padding:var(--s3) var(--s3) var(--s4)}
+.dock .row{display:flex;align-items:baseline;gap:var(--s2);margin-bottom:var(--s2)}
+.dock .row .v{font:700 20px var(--data);font-variant-numeric:tabular-nums;margin-left:auto}
+.dock .row .c{font:400 11px var(--data);color:var(--muted)}
+.saved{display:flex;align-items:center;gap:5px;font:400 11px var(--data);color:var(--go-ink);margin-top:var(--s2);
+  justify-content:center}
+.saved svg{width:11px;height:11px}
+
+/* ---------- bottom nav (2 destinations + 1 action) ---------- */
+.tabs{flex:none;display:flex;background:var(--panel);border-top:1px solid var(--edge);padding-bottom:6px}
+.tabs a{flex:1;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  text-decoration:none;color:var(--muted);font:600 10.5px var(--data);letter-spacing:.05em}
+.tabs a[aria-current="page"]{color:var(--go-ink)}
+.tabs a[aria-current="page"] svg{color:var(--go)}
+.tabs svg{width:20px;height:20px}
+.tabs .mid{flex:none;width:88px;padding:0 var(--s2)}
+.tabs .mid span{display:flex;align-items:center;justify-content:center;gap:5px;background:var(--go);color:#fff;
+  width:100%;min-height:44px;border-radius:var(--r-ctl);font:600 12px var(--ui)}
+
+.sronly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<p class="sheetnote">Direction C · The Docket · mobile mockup · 390 × 844
+  <span>Five screens. Creation is a pushed three-step flow with a device-local autosaved draft, not a responsive
+  reflow of the desktop form — the pattern Procurify, Shopify, FreshBooks and Stripe all ship, and the draft is
+  the container that makes it possible. Scroll sideways.</span></p>
+
+<div class="deck">
+
+<!-- ══════════════ 1 · QUEUE ══════════════ -->
+<div class="pane">
+  <p class="cap"><b>1</b> Queue <i>requester · Ankit Shah</i></p>
+  <div class="phone">
+    <div class="notch"><span>9:41</span><span>Sat 25 Jul</span></div>
+
+    <header class="appbar">
+      <h1>Two of your requests are open<small>ANKIT SHAH · R&amp;D</small></h1>
+      <button class="ghost" aria-label="Notifications, 1 unread">1 new</button>
+    </header>
+
+    <div class="body">
+      <div class="band-h act"><span class="n">1</span><h2>Stopped</h2><span class="why">not moving</span></div>
+
+      <a class="dk sp-hold" href="#pr138">
+        <span class="dk-amt mono">$2,310.00</span><span class="dk-id">PR-2026-0138</span>
+        <p class="dk-ttl">LTE modules for Odosense v2</p>
+        <p class="dk-meta">Mouser Electronics · raised 16 Jul</p>
+        <span class="stamp" role="group" aria-label="Stage not recorded; on hold 6 days; unpaid">
+          <span class="st-unk"><span class="k">Stage</span>Not recorded</span>
+          <span class="st-hold"><span class="k">State</span>Hold&nbsp;6d</span>
+          <span class="st-stop"><span class="k">Pay</span>Unpaid</span>
+        </span>
+        <p class="dk-note q"><b>Held by Meera Patel, 6 days ago.</b> No reason was recorded, so nobody can tell you
+          why from here.</p>
+      </a>
+      <button class="btn wide" style="margin-bottom:var(--s5)">Ask Meera for an update</button>
+
+      <div class="band-h"><span class="n">1</span><h2>On its way</h2><span class="why">nothing to do</span></div>
+
+      <a class="dk sp-go" href="#pr142">
+        <span class="dk-amt mono">€4,820.00</span><span class="dk-id">PR-2026-0142</span>
+        <p class="dk-ttl">PM sensor evaluation batch, Gen-5</p>
+        <p class="dk-meta">Sensirion AG · 3 lines · 101 pcs</p>
+        <span class="stamp" role="group" aria-label="In transit; live; paid">
+          <span class="st-wait"><span class="k">Stage</span>In transit</span>
+          <span class="st-off"><span class="k">State</span>Live</span>
+          <span class="st-go"><span class="k">Pay</span>Paid</span>
+        </span>
+        <p class="dk-note g"><b>Arriving Wed 29 July</b> — 4 days. DHL <span class="mono">7845 2291 0033</span>.</p>
+      </a>
+
+      <div class="band-h"><span class="n">2</span><h2>Done</h2><span class="why">this quarter</span></div>
+      <p class="hint" style="margin:0">Nothing of yours was rejected. Both of your closed requests arrived and are
+        paid. <a href="#all" style="color:var(--go-ink)">See all 8 requests →</a></p>
+    </div>
+
+    <nav class="tabs" aria-label="Main">
+      <a href="#q" aria-current="page">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h9"/></svg>Queue</a>
+      <span class="mid"><span><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>Raise</span></span>
+      <a href="#all">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 8h14M8 8v9"/></svg>All</a>
+    </nav>
+  </div>
+</div>
+
+<!-- ══════════════ 2 · NEW · STEP 1 ══════════════ -->
+<div class="pane">
+  <p class="cap"><b>2</b> New request · step 1 <i>what &amp; why</i></p>
+  <div class="phone">
+    <div class="notch"><span>9:42</span><span>Sat 25 Jul</span></div>
+
+    <header class="appbar">
+      <button class="back" aria-label="Back to queue">
+        <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 6 10l6 6"/></svg></button>
+      <h1>New request<small>STEP 1 OF 3</small></h1>
+      <button class="ghost">Save &amp; close</button>
+    </header>
+    <ol class="steps">
+      <li class="on">What &amp; why<b>STEP 1</b></li>
+      <li>Items<b>STEP 2</b></li>
+      <li>Check &amp; send<b>STEP 3</b></li>
+    </ol>
+
+    <div class="body tight">
+      <!-- F-30 / F-31: department is the single variable that scopes projects,
+           vendors and item types, and the current form never shows it. The
+           pre-flight check happens here, before anything is typed. -->
+      <div class="ctx">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v4M8 4.9v.1" stroke-linecap="round"/></svg>
+        <span>Raising for <b>R&amp;D</b>. That decides which projects, vendors and item types you can pick.
+          R&amp;D has <b>4 projects</b>, <b>6 vendors</b> and <b>5 item types</b> set up — you are good to go.</span>
+      </div>
+
+      <fieldset>
+        <legend class="sronly">Request details</legend>
+
+        <label class="f">
+          <span class="t"><span class="name">Project</span><span class="req">Required</span></span>
+          <select required>
+            <option value="">Choose a project…</option>
+            <option selected>Polludrone Gen-5</option>
+            <option>Odosense v2</option><option>Aeroceptor trials</option><option>Sensor characterisation rig</option>
+          </select>
+          <span class="help">Only R&amp;D's running projects are listed. Ask an admin if yours is missing.</span>
+        </label>
+
+        <label class="f">
+          <span class="t"><span class="name">Purpose</span><span class="opt">optional, but approvers read it first</span></span>
+          <input type="text" value="PM sensor evaluation batch for Gen-5 board bring-up" autocapitalize="sentences">
+          <span class="help">One line on why this is needed.</span>
+        </label>
+
+        <label class="f">
+          <span class="t"><span class="name">Vendor</span><span class="opt">optional</span></span>
+          <select>
+            <option>Sensirion AG — PM and RH/T sensor modules</option>
+            <option>Mouser Electronics — components, USD</option>
+            <option>DigiKey — components, USD</option>
+            <option>Robu.in — fast local prototyping parts</option>
+            <option>Element14 India — general distributor</option>
+            <option>Amazon Business — misc, fast</option>
+          </select>
+          <span class="help">6 vendors are mapped to R&amp;D. A native picker, not a custom combobox — it keyboards,
+            it screen-reads, and it does not revert what you typed.</span>
+        </label>
+
+        <div class="pair" style="margin-bottom:var(--s4)">
+          <label class="f">
+            <span class="t"><span class="name">Currency</span></span>
+            <select><option>EUR — Euro (€)</option><option>INR — Indian Rupee (₹)</option>
+              <option>USD — US Dollar ($)</option><option>GBP — Pound Sterling (£)</option></select>
+          </label>
+          <label class="f">
+            <span class="t"><span class="name">Needed by</span></span>
+            <input type="date" value="2026-08-14">
+          </label>
+        </div>
+
+        <div class="f">
+          <span class="t"><span class="name">Priority</span></span>
+          <div class="chips" role="group" aria-label="Priority">
+            <button type="button" aria-pressed="true">Critical</button>
+            <button type="button" aria-pressed="false">High</button>
+            <button type="button" aria-pressed="false">Medium</button>
+            <button type="button" aria-pressed="false">Low</button>
+          </div>
+          <p class="help"><b>Critical</b> — must-have immediately, expedite even at extra cost. The full definition
+            of each level is written here, not hidden behind a hover bubble.</p>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="dock">
+      <button class="btn pri wide">Next — add items</button>
+      <p class="saved"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5 5 9.5 10 3"/></svg>
+        Draft saved on this device · 09:42</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ 3 · NEW · STEP 2 · ITEM STACK ══════════════ -->
+<div class="pane">
+  <p class="cap"><b>3</b> New request · step 2 <i>the line-item screen — audit finding #1</i></p>
+  <div class="phone">
+    <div class="notch"><span>9:47</span><span>Sat 25 Jul</span></div>
+
+    <header class="appbar">
+      <button class="back" aria-label="Back to step 1">
+        <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 6 10l6 6"/></svg></button>
+      <h1>Items<small>STEP 2 OF 3 · POLLUDRONE GEN-5</small></h1>
+      <button class="ghost">Save &amp; close</button>
+    </header>
+    <ol class="steps">
+      <li class="done">What &amp; why<b>DONE</b></li>
+      <li class="on">Items<b>STEP 2</b></li>
+      <li>Check &amp; send<b>STEP 3</b></li>
+    </ol>
+
+    <div class="body tight">
+      <p class="hint" style="margin-bottom:var(--s3)">Three items. Tap one to edit it.</p>
+
+      <!-- Each card carries what Baymard's accordion research demands:
+           enough to verify without reopening. -->
+      <div class="item">
+        <a href="#item1">
+          <span class="no">1</span>
+          <span class="g"><span class="d">SPS30 particulate matter sensor module</span>
+            <span class="s">SPS30-2M · Inventory · 40 pcs × €92.00</span></span>
+          <span class="lt">€3,680.00</span>
+          <span class="chev"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 2l5 5-5 5"/></svg></span>
+        </a>
+        <div class="itembar">
+          <button type="button"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7" rx="1.5"/><path d="M4 10.5h6a.5.5 0 0 0 .5-.5V4"/></svg>Duplicate</button>
+          <button type="button" class="del"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 3h8M4.5 3V1.8h3V3M3 3l.6 7.2h4.8L9 3"/></svg>Remove</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <a href="#item2">
+          <span class="no">2</span>
+          <span class="g"><span class="d">SHT45 humidity and temperature sensor</span>
+            <span class="s">SHT45-AD1B · Inventory · 60 pcs × €14.50</span></span>
+          <span class="lt">€870.00</span>
+          <span class="chev"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 2l5 5-5 5"/></svg></span>
+        </a>
+        <div class="itembar">
+          <button type="button"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7" rx="1.5"/><path d="M4 10.5h6a.5.5 0 0 0 .5-.5V4"/></svg>Duplicate</button>
+          <button type="button" class="del"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 3h8M4.5 3V1.8h3V3M3 3l.6 7.2h4.8L9 3"/></svg>Remove</button>
+        </div>
+      </div>
+
+      <!-- an incomplete line is flagged on the card, in place, not as a
+           corner toast the user must map back to a row (audit S-16) -->
+      <div class="item">
+        <a href="#item3">
+          <span class="no">3</span>
+          <span class="g"><span class="d">Sensor evaluation kit, SEK-SVM41</span>
+            <span class="s">SEK-SVM41 · Asset · 1 set × €270.00</span></span>
+          <span class="lt">€270.00</span>
+          <span class="chev"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 2l5 5-5 5"/></svg></span>
+        </a>
+        <p class="warn"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 1.5 11 10.5H1z" stroke-linejoin="round"/><path d="M6 5v2.4M6 9v.1" stroke-linecap="round"/></svg>
+          Needs a purchase link before this can be ordered</p>
+        <div class="itembar">
+          <button type="button"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7" rx="1.5"/><path d="M4 10.5h6a.5.5 0 0 0 .5-.5V4"/></svg>Duplicate</button>
+          <button type="button" class="del"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 3h8M4.5 3V1.8h3V3M3 3l.6 7.2h4.8L9 3"/></svg>Remove</button>
+        </div>
+      </div>
+
+      <button class="btn wide" style="margin-top:var(--s3)">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+        Add an item</button>
+    </div>
+
+    <div class="dock">
+      <p class="row"><span class="lbl">Request total</span>
+        <span class="c">3 items</span>
+        <span class="v" aria-live="polite">€4,820.00</span></p>
+      <button class="btn pri wide">Next — check &amp; send</button>
+      <p class="saved"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5 5 9.5 10 3"/></svg>
+        Draft saved on this device · 09:47</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ 4 · ITEM EDITOR (pushed) ══════════════ -->
+<div class="pane">
+  <p class="cap"><b>4</b> Item editor <i>pushed screen · one item · two disclosure levels, no more</i></p>
+  <div class="phone">
+    <div class="notch"><span>9:48</span><span>Sat 25 Jul</span></div>
+
+    <header class="appbar">
+      <button class="back" aria-label="Back to items, keeping changes">
+        <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 6 10l6 6"/></svg></button>
+      <h1>Item 3 of 3<small>NEW REQUEST · POLLUDRONE GEN-5</small></h1>
+    </header>
+
+    <div class="body tight">
+      <fieldset>
+        <legend class="sronly">Item details</legend>
+
+        <label class="f">
+          <span class="t"><span class="name">What is it</span><span class="req">Required</span></span>
+          <input type="text" value="Sensor evaluation kit, SEK-SVM41" autocapitalize="sentences" enterkeyhint="next">
+          <span class="help">One line, as you would write it on a quote.</span>
+        </label>
+
+        <label class="f">
+          <span class="t"><span class="name">Item type</span><span class="req">Required</span></span>
+          <!-- audit R-11: today this control renders blank, is required, and
+               has no label, no placeholder and no reachable hint on a phone. -->
+          <select required>
+            <option value="">Choose a type…</option>
+            <option selected>Asset</option><option>Inventory</option><option>Local Purchase</option>
+            <option>Subscription</option><option>Certification</option>
+          </select>
+          <span class="help">R&amp;D's categories. Drives departmental reporting — an evaluation kit that stays in
+            the lab is an <b>Asset</b>; parts that go into a build are <b>Inventory</b>.</span>
+        </label>
+
+        <div class="pair" style="margin-bottom:var(--s4)">
+          <!-- Baymard: never split one value across fields on mobile.
+               Quantity and unit sit on one line as one composite control. -->
+          <label class="f">
+            <span class="t"><span class="name">How many</span><span class="req">Required</span></span>
+            <input type="number" inputmode="decimal" min="0" step="any" value="1" enterkeyhint="next">
+          </label>
+          <label class="f">
+            <span class="t"><span class="name">Unit</span></span>
+            <select><option>set</option><option>pcs</option><option>L</option><option>kg</option>
+              <option>m</option><option>box</option><option>license</option></select>
+          </label>
+        </div>
+
+        <label class="f">
+          <span class="t"><span class="name">Price for one</span><span class="opt">optional — leave blank if unknown</span></span>
+          <input type="number" inputmode="decimal" min="0" step="0.01" value="270.00" enterkeyhint="done">
+          <span class="help">In EUR, this request's currency. Line total is worked out for you.</span>
+        </label>
+
+        <p style="display:flex;align-items:baseline;gap:var(--s2);background:var(--sunken);border:1px solid var(--edge);
+          border-radius:var(--r-ctl);padding:var(--s3);margin-bottom:var(--s4)">
+          <span class="lbl">This line</span>
+          <span class="mono" style="margin-left:auto;font-weight:700;font-size:16px" aria-live="polite">€270.00</span></p>
+
+        <!-- Level 2, and the last level. NN/g: beyond two disclosure levels
+             usability collapses. Native <details> — no JS, and every input
+             stays in the DOM so a form collector never has to know. -->
+        <details style="border:1px solid var(--edge-strong);border-radius:var(--r-panel);background:var(--panel);margin-bottom:var(--s4)">
+          <summary style="min-height:var(--tap);display:flex;align-items:center;gap:var(--s2);padding:0 var(--s3);
+            cursor:pointer;font:600 13px var(--ui)">
+            Links and part number<span class="lbl" style="margin-left:auto;text-transform:none;letter-spacing:0">2 of 3 filled</span></summary>
+          <div style="padding:0 var(--s3) var(--s3);border-top:1px solid var(--edge)">
+            <label class="f" style="margin-top:var(--s3)">
+              <span class="t"><span class="name">Where to buy it</span><span class="opt">paste a link</span></span>
+              <input type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false"
+                     placeholder="https://" aria-invalid="true" aria-describedby="e1">
+              <span class="err" id="e1"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="7" cy="7" r="5.6"/><path d="M7 4v3.4M7 9.6v.1" stroke-linecap="round"/></svg>
+                Add a link so procurement knows the exact variant to order.</span>
+            </label>
+            <label class="f" style="margin-bottom:var(--s3)">
+              <span class="t"><span class="name">Datasheet or spec</span><span class="opt">optional</span></span>
+              <input type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false"
+                     value="https://sensirion.com/sek-svm41">
+            </label>
+            <p class="help" style="margin:0 0 var(--s3)">Zoho part number appears here for Production only.
+              You are in R&amp;D, so it is not asked for.</p>
+          </div>
+        </details>
+
+        <div style="display:flex;gap:var(--s2)">
+          <button type="button" class="btn" style="flex:1">Duplicate this item</button>
+          <button type="button" class="btn stop" style="flex:1">Remove item</button>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="dock">
+      <p class="row"><span class="lbl">Request total</span><span class="c">3 items</span>
+        <span class="v" aria-live="polite">€4,820.00</span></p>
+      <button class="btn pri wide">Done — back to items</button>
+      <p class="saved"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5 5 9.5 10 3"/></svg>
+        Draft saved on this device · 09:48</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ 5 · APPROVER DECISION ══════════════ -->
+<div class="pane">
+  <p class="cap"><b>5</b> Decision <i>approver · where an email link lands</i></p>
+  <div class="phone">
+    <div class="notch"><span>9:51</span><span>Sat 25 Jul</span></div>
+
+    <header class="appbar">
+      <button class="back" aria-label="Back to queue">
+        <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4 6 10l6 6"/></svg></button>
+      <h1>PR-2026-0141<small>WAITING 3 DAYS · RAKESH CHAUHAN</small></h1>
+    </header>
+
+    <div class="body tight">
+      <!-- market.md §4: design the approval SCREEN first. The four decision
+           facts sit above the buttons; the detail sits below them. -->
+      <p style="font:600 17px/1.35 var(--ui);margin-bottom:var(--s2)">Enclosure fabrication for Q3 production run</p>
+      <p style="font:700 26px var(--data);font-variant-numeric:tabular-nums;margin-bottom:var(--s3)">₹1,84,500.00</p>
+
+      <span class="stamp" role="group" aria-label="Submitted 3 days; live; unpaid">
+        <span class="st-new"><span class="k">Stage</span>Submitted&nbsp;3d</span>
+        <span class="st-off"><span class="k">State</span>Live</span>
+        <span class="st-stop"><span class="k">Pay</span>Unpaid</span>
+      </span>
+
+      <dl style="margin:var(--s4) 0;display:grid;grid-template-columns:auto 1fr;gap:var(--s2) var(--s4);font-size:13px">
+        <dt class="lbl" style="align-self:center">Who</dt><dd>Rakesh Chauhan · Production</dd>
+        <dt class="lbl" style="align-self:center">Project</dt><dd>Dustroid batch 12</dd>
+        <dt class="lbl" style="align-self:center">Vendor</dt><dd>Precision Sheet Metal Works · Net 30</dd>
+        <dt class="lbl" style="align-self:center">Why</dt><dd>Enclosure fabrication for the Q3 production run</dd>
+      </dl>
+
+      <div style="border:1px solid var(--edge);border-radius:var(--r-panel);overflow:hidden;margin-bottom:var(--s4)">
+        <p style="background:var(--sunken);padding:var(--s2) var(--s3);border-bottom:1px solid var(--edge)" class="lbl">2 lines</p>
+        <p style="padding:var(--s2) var(--s3);border-bottom:1px solid var(--edge);font-size:12.5px">
+          Powder-coated aluminium enclosure, IP65, 300×200×120<br>
+          <span class="mono" style="color:var(--muted)">150 pcs × ₹1,050.00 =</span>
+          <span class="mono" style="font-weight:700">₹1,57,500.00</span></p>
+        <p style="padding:var(--s2) var(--s3);font-size:12.5px">
+          Stainless mounting bracket, pole clamp<br>
+          <span class="mono" style="color:var(--muted)">150 pcs × ₹180.00 =</span>
+          <span class="mono" style="font-weight:700">₹27,000.00</span></p>
+      </div>
+
+      <p class="dk-note g" style="margin:0 0 var(--s4)">You have approved <b class="mono">₹4,02,300</b> with this
+        vendor across 6 requests; 1 is still unpaid, and deliveries have averaged 4 days past expected.</p>
+
+      <p class="lbl" style="margin-bottom:var(--s2)">What happened so far</p>
+      <ol style="list-style:none;font-size:12.5px;border-left:2px solid var(--edge);padding-left:var(--s3)">
+        <li style="margin-bottom:var(--s2)"><b>Raised by Rakesh Chauhan</b><br>
+          <span class="mono" style="color:var(--muted)">22 Jul, 11:04 IST · 2 lines · ₹1,84,500.00</span></li>
+        <li><b>Item 2 quantity changed 100 → 150</b><br>
+          <span class="mono" style="color:var(--muted)">22 Jul, 15:20 IST · Rakesh Chauhan</span></li>
+      </ol>
+      <p class="help" style="margin-top:var(--s2)">Read from the audit log the backend already writes on every
+        create, edit and transition.</p>
+    </div>
+
+    <div class="dock">
+      <button class="btn pri wide" style="margin-bottom:var(--s2)">Approve ₹1,84,500.00</button>
+      <div style="display:flex;gap:var(--s2)">
+        <button class="btn sm" style="flex:1">Ask for changes</button>
+        <button class="btn sm" style="flex:1">Hold</button>
+        <button class="btn sm stop" style="flex:1">Reject</button>
+      </div>
+      <p class="saved" style="color:var(--muted)">Holding and rejecting both ask for a reason. Approving does not.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
