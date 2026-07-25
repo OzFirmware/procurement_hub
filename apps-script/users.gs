@@ -8,7 +8,8 @@ function listUsers_() {
         role: String(data[i][1]).toLowerCase(),
         department: String(data[i][4] || ''),
         addedBy: String(data[i][2] || ''),
-        name: String(data[i][5] || '')
+        name: String(data[i][5] || ''),
+        picture: String(data[i][6] || '')
       });
     }
   }
@@ -74,7 +75,7 @@ registerRoute_('userSet', { minRole: 'admin' }, function (user, body) {
     }
     if (!role) throw new Error('User not found: ' + email);
     ensureDeptHeader_(sh);
-    sh.appendRow([email, role, user.email, nowIso_(), dept || '', '']); // name fills on their first sign-in
+    sh.appendRow([email, role, user.email, nowIso_(), dept || '', '', '']); // name+photo fill on their first sign-in
     log_(user, '', 'userSet', email + ' → ' + role + (dept ? ' / dept: ' + dept : ''));
     notify_('invited', [email], '',
       'You have been added to the Oizom Procurement Hub as ' + role + (dept ? ' (' + dept + ')' : '') + '. Sign in with your @oizom.com Google account.',
