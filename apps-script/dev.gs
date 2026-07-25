@@ -1,6 +1,16 @@
 // Admin-only maintenance routes — dashboard replaces the Apps Script
 // editor for routine operations.
 
+// Run from the editor to verify the mail scope: sends a test mail to yourself.
+// First run after adding MailApp code triggers the authorization dialog if
+// the scope isn't granted yet.
+function testMail() {
+  MailApp.sendEmail(Session.getEffectiveUser().getEmail(),
+    'Procurement Hub mail test', 'Mail scope works — notifications can send.');
+  Logger.log('sent to ' + Session.getEffectiveUser().getEmail() +
+    ' — remaining daily quota: ' + MailApp.getRemainingDailyQuota());
+}
+
 registerRoute_('health', { minRole: 'admin' }, function () {
   var tabs = ss_().getSheets().map(function (sh) {
     return { name: sh.getName(), rows: Math.max(sh.getLastRow() - 1, 0) };
