@@ -1,0 +1,835 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction A — Unify · Desktop · Oizom Procurement Hub</title>
+<style>
+/* ============================================================
+   DIRECTION A — "UNIFY"
+   One token system. Replaces the two stacked systems in
+   frontend/src/styles.css (original green set + Material-3 block).
+   Every colour pair below is contrast-checked; ratios are in
+   rationale.md § Design tokens.
+   ============================================================ */
+:root{
+  /* --- surfaces: 5 near-whites -> 3 ------------------------- */
+  --surface:#FFFFFF;      /* was --panel AND --adm-lowest (identical) */
+  --bg:#F4F7F5;           /* was --bg; kills --adm-low, --adm-surface */
+  --sunken:#ECF0ED;       /* was --grey-soft; table heads, inset rows */
+  --dark:#0F1F18; --dark-2:#16291F;
+  --on-dark:#FFFFFF; --on-dark-mut:#CFE0D7;
+
+  /* --- lines: 2 incompatible tokens -> 2 with distinct jobs -- */
+  --hairline:#BFCFC6;     /* decorative rules only            1.62:1 */
+  --border:#778D82;       /* every control boundary   3.55 / 3.29 / 3.09 */
+
+  /* --- ink: 4 near-blacks -> 2 ------------------------------ */
+  --ink:#14241C;          /* 16.17:1 on surface */
+  --mut:#5E7066;          /* 5.27 / 4.89 / 4.58 */
+
+  /* --- semantic hues: one pair each ------------------------- */
+  --brand:#006E16;        --brand-tint:#DAEDDB;   /* 6.48 / 5.28 */
+  --blue:#2A5FAA;         --blue-tint:#E4ECF8;    /* 6.33 / 5.32 */
+  --amber:#8A4A05;        --amber-tint:#FBEEDC;   /* 6.86 / 6.00 */
+  --violet:#5340A0;       --violet-tint:#EAE6F7;  /* 8.05 / 6.58 */
+  --red:#B3362B;          --red-tint:#FAE6E3;     /* 6.04 / 5.03 */
+
+  /* --- type: 21 sizes -> 6; 3 faces -> 2 -------------------- */
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-monospace,SFMono-Regular,"SF Mono","IBM Plex Mono",Menlo,Consolas,monospace;
+  --t-micro:11px; --t-sm:12px; --t-base:14px; --t-md:16px; --t-lg:20px; --t-xl:28px;
+
+  /* --- space: 4px base, 6 steps (Open Props scale) ---------- */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+
+  /* --- radius: 11 values -> 3 ------------------------------- */
+  --r1:6px; --r2:10px; --rf:999px;
+
+  /* --- elevation: 6 shadows -> 2 ---------------------------- */
+  --e1:0 1px 2px rgba(20,36,28,.06),0 1px 3px rgba(20,36,28,.05);
+  --e2:0 10px 28px -10px rgba(20,36,28,.28);
+
+  /* --- motion: 4 durations + transition:all -> 1 ------------ */
+  --dur:140ms; --ease:cubic-bezier(.2,0,0,1);
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:var(--t-base);line-height:1.45}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:var(--r1)}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- topbar ---------- */
+.topbar{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s5);
+  background:var(--dark);color:var(--on-dark);position:sticky;top:0;z-index:20;flex-wrap:wrap}
+.brandmark{display:flex;align-items:center;gap:var(--s2);font-size:var(--t-md);font-weight:600;letter-spacing:-.01em}
+.brandmark svg{flex:none}
+.topbar nav{display:flex;gap:var(--s1);flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.topbar nav a{color:var(--on-dark-mut);text-decoration:none;padding:6px var(--s3);border-radius:var(--r1);
+  font-size:13px;white-space:nowrap}
+.topbar nav a[aria-current="page"]{background:var(--dark-2);color:#fff;font-weight:600}
+.topbar nav a:hover{background:var(--dark-2);color:#fff}
+.iconbtn{border:1px solid transparent;background:none;color:var(--on-dark-mut);width:36px;height:36px;
+  border-radius:var(--rf);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:background var(--dur) var(--ease)}
+.iconbtn:hover{background:var(--dark-2);color:#fff}
+.iconbtn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.who{display:flex;align-items:center;gap:var(--s2);padding:4px 6px;border-radius:var(--rf);
+  background:none;border:1px solid transparent;color:#fff;font-family:inherit;font-size:13px;cursor:pointer}
+.who:hover{background:var(--dark-2)}
+.av{width:28px;height:28px;border-radius:50%;background:var(--brand-tint);color:var(--brand);
+  display:inline-flex;align-items:center;justify-content:center;font-size:var(--t-micro);font-weight:700;flex:none}
+.bell{position:relative}
+.bell .dot{position:absolute;top:3px;right:3px;min-width:16px;height:16px;padding:0 4px;border-radius:var(--rf);
+  background:var(--red);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;border:2px solid var(--dark)}
+
+/* ---------- page shell ---------- */
+.wrap{max-width:1200px;margin:0 auto;padding:var(--s5) var(--s5) var(--s6)}
+.pagehead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--s4);margin-bottom:var(--s4)}
+h1{font-size:var(--t-lg);line-height:1.25;font-weight:600;letter-spacing:-.01em}
+.pagehead p{font-size:var(--t-sm);color:var(--mut);margin-top:2px}
+.eyebrow{font-size:var(--t-micro);letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--mut)}
+
+/* ---------- buttons: one system ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:36px;
+  padding:0 var(--s4);border-radius:var(--r1);border:1px solid var(--border);background:var(--surface);
+  color:var(--ink);font:inherit;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;
+  transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease)}
+.btn:hover{background:var(--sunken)}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn-primary:hover{background:#005B12;border-color:#005B12}
+.btn-sm{min-height:30px;padding:0 var(--s3);font-size:var(--t-sm)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn svg{flex:none}
+
+/* ---------- card: one treatment ---------- */
+.card{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r2);
+  box-shadow:var(--e1);margin-bottom:var(--s4);overflow:hidden}
+.card > h2, .cardhead{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;
+  padding:var(--s3) var(--s4);border-bottom:1px solid var(--hairline);
+  font-size:var(--t-md);font-weight:600;letter-spacing:-.005em}
+.cardhead .sub{font-size:var(--t-sm);font-weight:400;color:var(--mut)}
+
+/* ---------- KPI tiles ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:var(--s3);margin-bottom:var(--s3)}
+.kpi{display:block;text-align:left;background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r2);
+  box-shadow:var(--e1);padding:var(--s3) var(--s4);font:inherit;color:inherit;cursor:pointer;
+  border-left:3px solid var(--hairline);transition:border-color var(--dur) var(--ease)}
+.kpi:hover{border-color:var(--border);border-left-color:var(--kc,var(--border))}
+.kpi[aria-pressed="true"]{border-color:var(--kc,var(--brand));box-shadow:var(--e1),inset 0 0 0 1px var(--kc,var(--brand))}
+.kpi{border-left-color:var(--kc,var(--hairline))}
+.kpi .k-l{display:flex;align-items:center;gap:6px;font-size:var(--t-micro);letter-spacing:.06em;
+  text-transform:uppercase;font-weight:600;color:var(--mut)}
+.kpi .k-v{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:var(--t-xl);font-weight:600;
+  line-height:1.1;margin:6px 0 2px;letter-spacing:-.02em}
+.kpi .k-s{font-size:var(--t-sm);color:var(--mut)}
+.kpi.k-attn{--kc:var(--amber)} .kpi.k-hold{--kc:var(--amber)}
+.kpi.k-transit{--kc:var(--violet)} .kpi.k-done{--kc:var(--brand)} .kpi.k-open{--kc:var(--blue)}
+
+/* ---------- the money panel: no summed headline ---------- */
+.money{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0;
+  border-top:1px solid var(--hairline)}
+.money > div{padding:var(--s3) var(--s4);border-right:1px solid var(--hairline)}
+.money > div:last-child{border-right:none}
+.m-c{font-size:var(--t-micro);letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--mut)}
+.m-v{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:var(--t-md);font-weight:600;margin-top:2px}
+.m-n{font-size:var(--t-sm);color:var(--mut)}
+.note{display:flex;gap:var(--s2);align-items:flex-start;padding:var(--s3) var(--s4);background:var(--sunken);
+  border-top:1px solid var(--hairline);font-size:var(--t-sm);color:var(--mut)}
+.note svg{flex:none;margin-top:1px;color:var(--mut)}
+
+/* ---------- status pill (workflow axis) ---------- */
+.st{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:var(--rf);
+  font-size:var(--t-sm);font-weight:600;line-height:18px;white-space:nowrap;vertical-align:middle}
+.st svg{width:13px;height:13px;flex:none}
+.st .age{font-weight:400;opacity:.85;font-family:var(--num);font-variant-numeric:tabular-nums}
+.st-submitted{background:var(--blue-tint);color:var(--blue)}
+.st-approved{background:var(--brand-tint);color:var(--brand)}
+.st-ordered{background:var(--amber-tint);color:var(--amber)}
+.st-transit{background:var(--violet-tint);color:var(--violet)}
+.st-received{background:var(--brand);color:#fff}          /* solid = terminal */
+.st-cancelled{background:var(--mut);color:#fff}           /* solid = terminal */
+.st-rejected{background:var(--red-tint);color:var(--red)}
+.st-hold{background:var(--sunken);color:var(--mut);box-shadow:inset 3px 0 0 var(--amber);padding-left:13px}
+.heldfrom{font-size:var(--t-micro);color:var(--mut);margin-top:3px;display:block}
+
+/* ---------- payment tag (parallel axis, different shape) ---------- */
+.pay{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:var(--r1);
+  border:1px solid currentColor;background:transparent;font-size:var(--t-micro);font-weight:600;
+  letter-spacing:.02em;line-height:16px;white-space:nowrap;vertical-align:middle}
+.pay svg{width:10px;height:10px;flex:none}
+.pay-unpaid{color:var(--red)} .pay-paid{color:var(--brand)}
+.pay-part{color:var(--amber)} .pay-foc{color:var(--mut)}
+
+/* ---------- priority flag ---------- */
+.prio{display:inline-flex;align-items:center;gap:3px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  font-weight:700}
+.prio-critical{color:var(--red)} .prio-high{color:var(--amber)}
+
+/* ---------- filter bar (styled in styles.css today, rendered by nothing) ---------- */
+.filters{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center;padding:var(--s3) var(--s4);
+  background:var(--sunken);border-bottom:1px solid var(--hairline)}
+.field{display:flex;flex-direction:column;gap:5px}
+.field > .lbl{font-size:var(--t-micro);letter-spacing:.05em;text-transform:uppercase;font-weight:600;color:var(--mut)}
+input,select,textarea{font:inherit;font-size:var(--t-base);color:var(--ink);background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r1);padding:7px 10px;min-height:36px;width:100%}
+select{appearance:none;padding-right:30px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235E7066' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 7px center;background-size:18px}
+input::placeholder{color:var(--mut)}
+input:invalid:not(:placeholder-shown),select[aria-invalid="true"]{border-color:var(--red);
+  box-shadow:inset 0 0 0 1px var(--red)}
+.search{position:relative;flex:1;min-width:220px}
+.search input{padding-left:34px}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none}
+
+/* ---------- table: three padding scales -> one ---------- */
+.scroller{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;min-width:900px}
+table.t thead th{background:var(--sunken);text-align:left;font-size:var(--t-micro);letter-spacing:.06em;
+  text-transform:uppercase;font-weight:600;color:var(--mut);padding:var(--s2) var(--s3);
+  border-bottom:1px solid var(--hairline);white-space:nowrap}
+table.t td{padding:var(--s3);border-bottom:1px solid var(--hairline);vertical-align:top}
+/* the row header is a <th scope="row"> for association, not for styling — one rule,
+   never an inline override (the pathology T-09 and audit §2.4 both record) */
+table.t tbody th[scope="row"]{padding:var(--s3);border-bottom:1px solid var(--hairline);
+  text-align:left;vertical-align:top;background:none;font-weight:400;font-size:var(--t-base);
+  text-transform:none;letter-spacing:0;color:inherit}
+table.t tbody tr:last-child td,table.t tbody tr:last-child th[scope="row"]{border-bottom:none}
+table.t tbody tr:hover{background:var(--bg)}
+table.t tbody tr:focus-within{background:var(--bg);box-shadow:inset 3px 0 0 var(--brand)}
+.num-cell{text-align:right;font-family:var(--num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sortbtn{background:none;border:0;font:inherit;color:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:0}
+th[aria-sort="descending"] .sortbtn, th[aria-sort="ascending"] .sortbtn{color:var(--ink)}
+.rowlink{color:inherit;text-decoration:none;font-family:var(--num);font-size:13px;font-weight:600;
+  display:inline-flex;align-items:center;gap:6px}
+.rowlink:hover{text-decoration:underline}
+.sub{font-size:var(--t-sm);color:var(--mut)}
+.desc{max-width:280px}
+/* status control = the chip it replaces (admin/approver see a control, not a shouty select) */
+.stsel{position:relative;display:inline-block}
+.stsel select{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.stsel .st{padding-right:22px}
+.stsel .caret{position:absolute;right:7px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.7}
+.stsel:hover .st{box-shadow:inset 0 0 0 1px currentColor}
+.stsel:focus-within .st{outline:2px solid var(--brand);outline-offset:2px}
+
+/* ---------- PR detail ---------- */
+.crumbs{font-size:var(--t-sm);color:var(--mut);margin-bottom:var(--s2)}
+.crumbs a{color:var(--mut)}
+.detailhead{display:flex;flex-wrap:wrap;gap:var(--s4);align-items:flex-start;justify-content:space-between;
+  margin-bottom:var(--s4)}
+.detailhead h1{max-width:52ch}
+.chiprow{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center;margin-top:var(--s2)}
+.amountblock{text-align:right;min-width:200px}
+.amountblock .a-v{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:var(--t-xl);
+  font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.amountblock .a-s{font-size:var(--t-sm);color:var(--mut);margin-top:2px}
+.actions{display:flex;gap:var(--s2);flex-wrap:wrap;margin-top:var(--s3);justify-content:flex-end}
+.grid2{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(280px,1fr);gap:var(--s4);align-items:start}
+.latest{display:flex;gap:var(--s3);padding:var(--s4);background:var(--violet-tint);border-bottom:1px solid var(--hairline)}
+.latest .ic{width:32px;height:32px;border-radius:var(--rf);background:var(--surface);color:var(--violet);
+  display:grid;place-items:center;flex:none}
+.latest b{display:block;font-size:var(--t-base)}
+.latest p{font-size:var(--t-sm);color:var(--mut);margin-top:2px}
+.tl{list-style:none;padding:var(--s4);display:grid;gap:0}
+.tl li{display:grid;grid-template-columns:18px 1fr;gap:var(--s3);padding-bottom:var(--s4);position:relative}
+.tl li:last-child{padding-bottom:0}
+.tl li::before{content:"";position:absolute;left:8px;top:18px;bottom:0;width:1px;background:var(--hairline)}
+.tl li:last-child::before{display:none}
+.tl .mk{width:17px;height:17px;border-radius:var(--rf);border:2px solid var(--hairline);background:var(--surface);
+  margin-top:1px;display:grid;place-items:center;z-index:1}
+.tl .mk.on{border-color:var(--violet);background:var(--violet)}
+.tl .mk.pay{border-color:var(--brand);border-style:dashed}
+.tl b{font-size:13px;font-weight:600}
+.tl .when{font-size:var(--t-sm);color:var(--mut);font-family:var(--num);font-variant-numeric:tabular-nums}
+.tl p{font-size:var(--t-sm);color:var(--mut)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--s4);padding:var(--s4)}
+.fact .f-l{font-size:var(--t-micro);letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--mut)}
+.fact .f-v{font-size:var(--t-base);margin-top:2px;overflow-wrap:anywhere}
+.people{display:flex;gap:var(--s5);flex-wrap:wrap;padding:var(--s4);border-top:1px solid var(--hairline)}
+.person{display:flex;gap:var(--s2);align-items:center}
+.person .av{width:32px;height:32px;font-size:var(--t-sm)}
+.total-row td{background:var(--sunken);font-weight:600;border-bottom:none}
+.legend{display:flex;flex-wrap:wrap;gap:var(--s3) var(--s5);padding:var(--s4)}
+.legend > div{display:flex;flex-direction:column;gap:6px;font-size:var(--t-sm);color:var(--mut)}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));gap:var(--s2);padding:var(--s4)}
+.sw{border:1px solid var(--hairline);border-radius:var(--r1);overflow:hidden;font-size:var(--t-micro)}
+.sw .chipc{height:34px}
+.sw .txt{padding:5px 7px;background:var(--surface)}
+.sw code{font-family:var(--num);font-size:10px;color:var(--mut);display:block}
+
+/* mockup scaffolding only — not part of the system */
+.sheetlabel{max-width:1200px;margin:var(--s6) auto var(--s3);padding:0 var(--s5)}
+.sheetlabel h2{font-size:var(--t-md);letter-spacing:.06em;text-transform:uppercase;color:var(--mut);
+  border-top:1px solid var(--hairline);padding-top:var(--s3);font-weight:600}
+.sheetlabel p{font-size:var(--t-sm);color:var(--mut);margin-top:4px;max-width:80ch}
+@media (max-width:880px){.grid2{grid-template-columns:1fr}.amountblock{text-align:left}.actions{justify-content:flex-start}}
+</style>
+</head>
+<body>
+
+<!-- ============ ICON SPRITE — inline SVG replaces the remote Material Symbols
+     ligature font (F-08: users read the literal words "refresh", "delete",
+     "shield_person" until the font arrives; A-23: screen readers read them too) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="i-clock" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6V8l2.4 1.6"/></g>
+    <g id="i-check" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4l3.4 3.4L13 4.8"/></g>
+    <g id="i-checkcircle" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2"/><path d="M5.2 8.2l2 2 3.6-4"/></g>
+    <g id="i-doc" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.2h5l3 3v8.6H4z"/><path d="M9 2.2v3h3M6 8.6h4M6 11h3"/></g>
+    <g id="i-truck" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1.4 4.4h7.4v6.4H1.4zM8.8 6.6h2.6l2.2 2.2v2H8.8z"/><circle cx="4.4" cy="12.2" r="1.4"/><circle cx="11.2" cy="12.2" r="1.4"/></g>
+    <g id="i-pause" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 4v8M10 4v8"/></g>
+    <g id="i-x" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2"/></g>
+    <g id="i-slash" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2"/><path d="M4.2 11.8L11.8 4.2"/></g>
+    <g id="i-search" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7.4" cy="7.4" r="4.6"/><path d="M10.8 10.8l3 3"/></g>
+    <g id="i-caret" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></g>
+    <g id="i-refresh" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.4v3.2h-3.2"/></g>
+    <g id="i-bell" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a4 4 0 0 1 8 0c0 3 1.2 4 1.2 4H2.8S4 10 4 7z"/><path d="M6.6 13.4a1.6 1.6 0 0 0 2.8 0"/></g>
+    <g id="i-plus" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3.4v9.2M3.4 8h9.2"/></g>
+    <g id="i-info" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4M8 5.1v.1"/></g>
+    <g id="i-alert" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.2l6 10.6H2z"/><path d="M8 6.4v3.2M8 11.4v.1"/></g>
+    <g id="i-ext" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.2h3.8V7"/><path d="M12.8 3.2L7.4 8.6M11 9.6v3.2H3.2V5h3.2"/></g>
+    <circle id="i-dot-o" cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
+    <circle id="i-dot-f" cx="8" cy="8" r="6" fill="currentColor"/>
+    <g id="i-dot-h"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3a5 5 0 0 1 0 10z" fill="currentColor"/></g>
+    <path id="i-dash" d="M2.5 8h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </defs>
+</svg>
+
+<!-- ================= TOPBAR ================= -->
+<header class="topbar">
+  <span class="brandmark">
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#47B448"/><path d="M5.5 10h8.2a1.9 1.9 0 1 0-1.6-2.9M5.5 12.4h9.6M5.5 14.8h7.6a1.9 1.9 0 1 1-1.6 2.9" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Oizom Procurement
+  </span>
+  <nav aria-label="Main">
+    <a href="#" aria-current="page">Requests</a>
+    <a href="#">Vendors</a>
+    <a href="#">Admin</a>
+  </nav>
+  <button class="iconbtn" type="button" aria-label="Refresh data"><svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+  <span class="bell">
+    <button class="iconbtn" type="button" aria-label="Notifications, 2 unread" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-bell"/></svg></button>
+    <span class="dot" aria-hidden="true">2</span>
+  </span>
+  <button class="who" type="button" aria-expanded="false" aria-haspopup="menu">
+    Meera Patel <span class="av" aria-hidden="true">MP</span>
+  </button>
+</header>
+
+<!-- ================= DASHBOARD ================= -->
+<main class="wrap">
+  <div class="pagehead">
+    <div>
+      <h1>Purchase requests</h1>
+      <p>Signed in as approver · Saturday 25 July 2026</p>
+    </div>
+    <a class="btn btn-primary" href="#"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-plus"/></svg> New request</a>
+  </div>
+
+  <!-- KPI tiles: counts only. Every tile states its population. (F-19) -->
+  <div class="kpis">
+    <button class="kpi k-attn" type="button" aria-pressed="true">
+      <span class="k-l"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-clock"/></svg> Waiting on you</span>
+      <span class="k-v">1</span>
+      <span class="k-s">oldest raised 3 days ago</span>
+    </button>
+    <button class="kpi k-open" type="button" aria-pressed="false">
+      <span class="k-l">Open</span>
+      <span class="k-v">5</span>
+      <span class="k-s">excludes received, rejected, cancelled</span>
+    </button>
+    <button class="kpi k-hold" type="button" aria-pressed="false">
+      <span class="k-l"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-pause"/></svg> On hold</span>
+      <span class="k-v">1</span>
+      <span class="k-s">held 6 days · no reason recorded</span>
+    </button>
+    <button class="kpi k-transit" type="button" aria-pressed="false">
+      <span class="k-l"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-truck"/></svg> In transit</span>
+      <span class="k-v">1</span>
+      <span class="k-s">arriving Wed 29 Jul</span>
+    </button>
+    <button class="kpi k-done" type="button" aria-pressed="false">
+      <span class="k-l">Received in July</span>
+      <span class="k-v">2</span>
+      <span class="k-s">1–25 Jul, all departments</span>
+    </button>
+  </div>
+
+  <!-- Mixed currency, handled honestly: four readings, no total. -->
+  <section class="card" aria-labelledby="cv">
+    <h2 class="cardhead" id="cv">Committed value <span class="sub">5 open requests · nothing converted</span></h2>
+    <div class="money">
+      <div>
+        <div class="m-c">INR</div>
+        <div class="m-v">₹3,47,900.00</div>
+        <div class="m-n">3 requests</div>
+      </div>
+      <div>
+        <div class="m-c">EUR</div>
+        <div class="m-v">€4,820.00</div>
+        <div class="m-n">1 request</div>
+      </div>
+      <div>
+        <div class="m-c">USD</div>
+        <div class="m-v">$2,310.00</div>
+        <div class="m-n">1 request</div>
+      </div>
+      <div>
+        <div class="m-c">GBP</div>
+        <div class="m-v" style="color:var(--mut)">—</div>
+        <div class="m-n">no open requests</div>
+      </div>
+    </div>
+    <p class="note">
+      <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-info"/></svg>
+      Four currencies are in play this month. These are four separate readings, not one number —
+      the tool holds no exchange rate, so it will not print a figure it cannot stand behind.
+    </p>
+  </section>
+
+  <!-- The PR table -->
+  <section class="card" aria-labelledby="tblh">
+    <h2 class="cardhead" id="tblh">
+      Waiting on you <span class="sub">1 of 8 requests</span>
+      <span style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-sm" type="button">Export CSV</button>
+      </span>
+    </h2>
+
+    <!-- .filters is fully styled in styles.css today and rendered by no view (T-03, F-11) -->
+    <div class="filters" role="search">
+      <label class="search">
+        <span class="vh">Search requests</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-search"/></svg>
+        <input type="search" placeholder="Search ID, item, vendor or project">
+      </label>
+      <label class="field"><span class="vh">Department</span>
+        <select><option>All departments</option><option>R&amp;D</option><option>Production</option><option>QC</option><option>Support</option><option>Marketing</option><option>Device Management</option><option>Admin</option></select>
+      </label>
+      <label class="field"><span class="vh">Status</span>
+        <select><option>Any status</option><option>Submitted</option><option>Approved</option><option>Ordered</option><option>In Transit</option><option>On Hold</option><option>Received</option><option>Rejected</option><option>Cancelled</option></select>
+      </label>
+      <label class="field"><span class="vh">Payment</span>
+        <select><option>Any payment</option><option>Unpaid</option><option>Partially Paid</option><option>Paid</option><option>FOC / Free</option></select>
+      </label>
+      <button class="btn btn-sm" type="button">Clear</button>
+    </div>
+
+    <div class="scroller">
+      <table class="t">
+        <caption class="vh">Purchase requests, newest first</caption>
+        <thead>
+          <tr>
+            <th scope="col">Request</th>
+            <th scope="col" aria-sort="descending"><button class="sortbtn" type="button">Raised <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg></button></th>
+            <th scope="col">For</th>
+            <th scope="col">Vendor</th>
+            <th scope="col" style="text-align:right">Amount</th>
+            <th scope="col">Status</th>
+            <th scope="col">Payment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">
+              <a class="rowlink" href="#">PR-2026-0141</a>
+              <span class="prio prio-high" style="display:block;margin-top:3px"><svg width="9" height="9" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-alert"/></svg> High</span>
+            </th>
+            <td><span class="num">22 Jul</span><div class="sub">3 days ago</div></td>
+            <td class="desc">Powder-coated aluminium enclosure, IP65, 300×200×120 <span class="sub">+1 more · Production · Dustroid batch 12</span></td>
+            <td>Precision Sheet Metal Works</td>
+            <td class="num-cell">₹1,84,500.00</td>
+            <td>
+              <span class="stsel">
+                <span class="st st-submitted"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-clock"/></svg> Submitted <span class="age">3 d</span></span>
+                <svg class="caret" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg>
+                <select aria-label="Change status of PR-2026-0141">
+                  <option selected>Submitted</option><option>Approved</option><option>Rejected</option><option>On Hold</option><option>Cancelled</option>
+                </select>
+              </span>
+            </td>
+            <td><span class="pay pay-unpaid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-o"/></svg> Unpaid</span><div class="sub" style="margin-top:3px">Net 30</div></td>
+          </tr>
+
+          <tr>
+            <th scope="row">
+              <a class="rowlink" href="#">PR-2026-0142</a>
+              <span class="prio prio-critical" style="display:block;margin-top:3px"><svg width="9" height="9" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-alert"/></svg> Critical</span>
+            </th>
+            <td><span class="num">29 Jun</span><div class="sub">26 days ago</div></td>
+            <td class="desc">SPS30 particulate matter sensor module <span class="sub">+2 more · R&amp;D · Polludrone Gen-5</span></td>
+            <td>Sensirion AG</td>
+            <td class="num-cell">€4,820.00</td>
+            <td>
+              <span class="stsel">
+                <span class="st st-transit"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-truck"/></svg> In Transit <span class="age">13 d</span></span>
+                <svg class="caret" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg>
+                <select aria-label="Change status of PR-2026-0142"><option selected>In Transit</option><option>Received</option><option>On Hold</option></select>
+              </span>
+              <span class="sub" style="display:block;margin-top:3px">ETA 29 Jul</span>
+            </td>
+            <td><span class="pay pay-paid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-f"/></svg> Paid</span><div class="sub" style="margin-top:3px">Advance 50%</div></td>
+          </tr>
+
+          <tr>
+            <th scope="row">
+              <a class="rowlink" href="#">PR-2026-0140</a>
+            </th>
+            <td><span class="num">18 Jul</span><div class="sub">7 days ago</div></td>
+            <td class="desc">NABL calibration — reference PM analyser <span class="sub">+1 more · QC · Calibration lab</span></td>
+            <td>NABL Calibration Services</td>
+            <td class="num-cell">₹68,000.00</td>
+            <td>
+              <span class="stsel">
+                <span class="st st-approved"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg> Approved <span class="age">4 d</span></span>
+                <svg class="caret" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg>
+                <select aria-label="Change status of PR-2026-0140"><option selected>Approved</option><option>Ordered</option><option>On Hold</option><option>Cancelled</option></select>
+              </span>
+            </td>
+            <td><span class="pay pay-unpaid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-o"/></svg> Unpaid</span><div class="sub" style="margin-top:3px">On Delivery</div></td>
+          </tr>
+
+          <tr>
+            <th scope="row">
+              <a class="rowlink" href="#">PR-2026-0138</a>
+              <span class="prio prio-high" style="display:block;margin-top:3px"><svg width="9" height="9" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-alert"/></svg> High</span>
+            </th>
+            <td><span class="num">12 Jul</span><div class="sub">13 days ago</div></td>
+            <td class="desc">LTE modules for Odosense v2 <span class="sub">R&amp;D · Odosense v2</span></td>
+            <td>Mouser Electronics</td>
+            <td class="num-cell">$2,310.00</td>
+            <td>
+              <span class="stsel">
+                <span class="st st-hold"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-pause"/></svg> On Hold <span class="age">6 d</span></span>
+                <svg class="caret" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg>
+                <select aria-label="Change status of PR-2026-0138"><option selected>On Hold</option><option>Submitted</option><option>Approved</option><option>Ordered</option><option>Cancelled</option></select>
+              </span>
+              <span class="heldfrom">held from Approved · no reason recorded</span>
+            </td>
+            <td><span class="pay pay-unpaid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-o"/></svg> Unpaid</span></td>
+          </tr>
+
+          <tr>
+            <th scope="row">
+              <a class="rowlink" href="#">PR-2026-0136</a>
+              <span class="prio prio-critical" style="display:block;margin-top:3px"><svg width="9" height="9" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-alert"/></svg> Critical</span>
+            </th>
+            <td><span class="num">08 Jul</span><div class="sub">17 days ago</div></td>
+            <td class="desc">Solar panels and charge controllers, 30 field units <span class="sub">Device Management · Fleet retrofit</span></td>
+            <td>Robu.in</td>
+            <td class="num-cell">₹95,400.00</td>
+            <td>
+              <span class="stsel">
+                <span class="st st-ordered"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-doc"/></svg> Ordered <span class="age">9 d</span></span>
+                <svg class="caret" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg>
+                <select aria-label="Change status of PR-2026-0136"><option selected>Ordered</option><option>In Transit</option><option>On Hold</option></select>
+              </span>
+            </td>
+            <td><span class="pay pay-part"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-h"/></svg> Part paid</span><div class="sub" style="margin-top:3px">Advance 50%</div></td>
+          </tr>
+
+          <tr>
+            <th scope="row">
+              <a class="rowlink" href="#">PR-2026-0139</a>
+            </th>
+            <td><span class="num">02 Jul</span><div class="sub">23 days ago</div></td>
+            <td class="desc">NO2-B43F electrochemical sensor <span class="sub">+1 more · Support · Field service</span></td>
+            <td>Alphasense Ltd</td>
+            <td class="num-cell">£1,240.00</td>
+            <td>
+              <span class="st st-received"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-checkcircle"/></svg> Received</span>
+              <span class="sub" style="display:block;margin-top:3px">18 Jul · FedEx</span>
+            </td>
+            <td><span class="pay pay-paid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-f"/></svg> Paid</span></td>
+          </tr>
+
+          <tr>
+            <th scope="row">
+              <a class="rowlink" href="#">PR-2026-0137</a>
+            </th>
+            <td><span class="num">30 Jun</span><div class="sub">25 days ago</div></td>
+            <td class="desc">Booth display units for IFAT India <span class="sub">Marketing · Trade show</span></td>
+            <td>Ganesh Enterprise</td>
+            <td class="num-cell">₹42,700.00</td>
+            <td>
+              <span class="stsel">
+                <span class="st st-rejected"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-x"/></svg> Rejected <span class="age">10 d</span></span>
+                <svg class="caret" width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg>
+                <select aria-label="Change status of PR-2026-0137"><option selected>Rejected</option><option>Submitted</option></select>
+              </span>
+              <span class="heldfrom">“Use existing booth hardware — resubmit for the LED panel only.”</span>
+            </td>
+            <td><span class="pay pay-unpaid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-o"/></svg> Unpaid</span></td>
+          </tr>
+
+          <tr>
+            <th scope="row">
+              <a class="rowlink" href="#">PR-2026-0135</a>
+            </th>
+            <td><span class="num">27 Jun</span><div class="sub">28 days ago</div></td>
+            <td class="desc">Lab consumables and ESD supplies <span class="sub">Admin · Office</span></td>
+            <td>Amazon Business</td>
+            <td class="num-cell">₹8,940.00</td>
+            <td><span class="st st-received"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-checkcircle"/></svg> Received</span></td>
+            <td><span class="pay pay-paid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-f"/></svg> Paid</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-info"/></svg>
+      Amounts are shown at full precision in their own currency and are never added together.
+      The status control offers only the moves the transition matrix permits for your role.
+    </p>
+  </section>
+</main>
+
+<!-- ================= PR DETAIL ================= -->
+<div class="sheetlabel">
+  <h2>PR detail · PR-2026-0142</h2>
+  <p>Same route, same data, same six views. What changed: the purpose is the title and the ID is a reference; the decision facts sit above the fold; the non-linear status model is drawn as a timeline rather than a stepper.</p>
+</div>
+
+<main class="wrap" style="padding-top:0">
+  <p class="crumbs"><a href="#">Requests</a> / <span class="num">PR-2026-0142</span></p>
+
+  <div class="detailhead">
+    <div>
+      <p class="eyebrow"><span class="num">PR-2026-0142</span> · R&amp;D · Polludrone Gen-5</p>
+      <h1>PM sensor evaluation batch for Gen-5 board bring-up</h1>
+      <div class="chiprow">
+        <span class="st st-transit"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-truck"/></svg> In Transit <span class="age">13 d</span></span>
+        <span class="pay pay-paid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-f"/></svg> Paid</span>
+        <span class="prio prio-critical"><svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-alert"/></svg> Critical</span>
+      </div>
+    </div>
+    <div class="amountblock">
+      <div class="a-v">€4,820.00</div>
+      <div class="a-s">Sensirion AG · Advance 50%</div>
+      <div class="actions">
+        <a class="btn btn-sm" href="#">Edit</a>
+        <button class="btn btn-sm" type="button">Put on hold</button>
+        <button class="btn btn-sm btn-primary" type="button"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg> Mark received</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <!-- items -->
+      <section class="card" aria-labelledby="itemsh">
+        <h2 class="cardhead" id="itemsh">Items <span class="sub">3 lines · 101 units</span></h2>
+        <div class="scroller">
+          <table class="t" style="min-width:640px">
+            <thead>
+              <tr>
+                <th scope="col" style="width:34px">#</th>
+                <th scope="col">Description</th>
+                <th scope="col">Type</th>
+                <th scope="col" style="text-align:right">Qty</th>
+                <th scope="col" style="text-align:right">Unit price</th>
+                <th scope="col" style="text-align:right">Line total</th>
+                <th scope="col">Links</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="num">1</td>
+                <td>SPS30 particulate matter sensor module<div class="sub num">SPS30-2M</div></td>
+                <td>Inventory</td>
+                <td class="num-cell">40 pcs</td>
+                <td class="num-cell">€92.00</td>
+                <td class="num-cell">€3,680.00</td>
+                <td><a href="#">buy <svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-ext"/></svg></a> · <a href="#">doc <svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-ext"/></svg></a></td>
+              </tr>
+              <tr>
+                <td class="num">2</td>
+                <td>SHT45 humidity and temperature sensor<div class="sub num">SHT45-AD1B</div></td>
+                <td>Inventory</td>
+                <td class="num-cell">60 pcs</td>
+                <td class="num-cell">€14.50</td>
+                <td class="num-cell">€870.00</td>
+                <td><a href="#">buy <svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-ext"/></svg></a></td>
+              </tr>
+              <tr>
+                <td class="num">3</td>
+                <td>Sensor evaluation kit, SEK-SVM41<div class="sub num">SEK-SVM41</div></td>
+                <td>Asset</td>
+                <td class="num-cell">1 set</td>
+                <td class="num-cell">€270.00</td>
+                <td class="num-cell">€270.00</td>
+                <td><a href="#">doc <svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-ext"/></svg></a></td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="5" style="text-align:right">Request total</td>
+                <td class="num-cell">€4,820.00</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- delivery, now with a writable courier path -->
+      <section class="card" aria-labelledby="delh">
+        <h2 class="cardhead" id="delh">Delivery <span class="sub">editable by approvers and admins</span></h2>
+        <div class="facts" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+          <label class="field"><span class="lbl">Courier</span>
+            <select><option selected>DHL</option><option>BlueDart</option><option>FedEx</option><option>DTDC</option><option>India Post</option><option>Amazon</option><option>Porter</option><option>Delhivery</option><option>Other</option></select>
+          </label>
+          <label class="field"><span class="lbl">Tracking number</span>
+            <input class="num" value="7845 2291 0033" inputmode="numeric">
+          </label>
+          <label class="field"><span class="lbl">Expected</span>
+            <input type="date" value="2026-07-29">
+          </label>
+          <div class="fact">
+            <span class="f-l">Track</span>
+            <div class="f-v"><a href="#">Open DHL tracking <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-ext"/></svg></a></div>
+          </div>
+        </div>
+        <p class="note">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-info"/></svg>
+          The backend has always accepted <span class="num">courier</span>, <span class="num">trackingNo</span> and
+          <span class="num">trackingLink</span>; no screen ever wrote them. These three controls close that loop.
+        </p>
+      </section>
+
+      <!-- request facts. Purpose is the title, so this card carries the rest. -->
+      <section class="card" aria-labelledby="reqh">
+        <h2 class="cardhead" id="reqh">Request</h2>
+        <div class="facts">
+          <div class="fact"><span class="f-l">Department</span><div class="f-v">R&amp;D</div></div>
+          <div class="fact"><span class="f-l">Project</span><div class="f-v">Polludrone Gen-5</div></div>
+          <div class="fact"><span class="f-l">Vendor</span><div class="f-v">Sensirion AG <span class="sub">Switzerland</span></div></div>
+          <div class="fact"><span class="f-l">Currency</span><div class="f-v">EUR — Euro <span class="sub">€</span></div></div>
+          <div class="fact"><span class="f-l">Payment term</span><div class="f-v">Advance 50%</div></div>
+          <div class="fact"><span class="f-l">PO reference</span><div class="f-v num">PO-2026-0311 <span class="sub">02 Jul 2026</span></div></div>
+        </div>
+        <div class="fact" style="padding:0 var(--s4) var(--s4)">
+          <span class="f-l">Notes for the approver</span>
+          <div class="f-v">Sensirion quoted a 6-week lead on SPS30 after this batch — worth ordering the Gen-5 pilot volume in the same PO if QC signs off before 15 Aug.</div>
+        </div>
+        <div class="people">
+          <div class="person"><span class="av" aria-hidden="true">AS</span><div><div class="f-l">Raised by</div><b>Ankit Shah</b><div class="sub">29 Jun 2026</div></div></div>
+          <div class="person"><span class="av" aria-hidden="true">MP</span><div><div class="f-l">Approved by</div><b>Meera Patel</b><div class="sub">01 Jul 2026</div></div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- the status column: latest first, then history. Not a stepper. -->
+    <div>
+      <section class="card" aria-labelledby="stath">
+        <h2 class="cardhead" id="stath">Status</h2>
+        <div class="latest">
+          <span class="ic" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 16 16"><use href="#i-truck"/></svg></span>
+          <div>
+            <b>Shipped 13 days ago, arriving Wed 29 Jul</b>
+            <p>DHL · AWB <span class="num">7845 2291 0033</span> · 4 days from now</p>
+          </div>
+        </div>
+        <ol class="tl">
+          <li><span class="mk on" aria-hidden="true"></span>
+            <div><b>In Transit</b> <span class="when">12 Jul</span><p>Collected by DHL, Zürich</p></div></li>
+          <li><span class="mk pay" aria-hidden="true"></span>
+            <div><b>Marked Paid</b> <span class="when">10 Jul</span><p>Balance settled — payment status only, order unchanged</p></div></li>
+          <li><span class="mk pay" aria-hidden="true"></span>
+            <div><b>Advance 50% paid</b> <span class="when">03 Jul</span><p>€2,410.00</p></div></li>
+          <li><span class="mk" aria-hidden="true"></span>
+            <div><b>Ordered</b> <span class="when">02 Jul</span><p><span class="num">PO-2026-0311</span> issued to Sensirion AG</p></div></li>
+          <li><span class="mk" aria-hidden="true"></span>
+            <div><b>Approved</b> <span class="when">01 Jul</span><p>Meera Patel</p></div></li>
+          <li><span class="mk" aria-hidden="true"></span>
+            <div><b>Submitted</b> <span class="when">29 Jun</span><p>Ankit Shah</p></div></li>
+        </ol>
+        <p class="note">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-info"/></svg>
+          Payment events (dashed markers) interleave with order events because they are a
+          separate axis. A five-step progress bar cannot show that, and cannot show
+          <em>On&nbsp;Hold</em> at all.
+        </p>
+      </section>
+
+      <section class="card" aria-labelledby="whath">
+        <h2 class="cardhead" id="whath">What can happen next</h2>
+        <div style="padding:var(--s4);display:grid;gap:var(--s3)">
+          <div style="display:flex;gap:var(--s2);align-items:flex-start">
+            <span class="st st-received" style="flex:none"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-checkcircle"/></svg> Received</span>
+            <span class="sub">Goods arrived and checked. Terminal — solid pills cannot be moved on.</span>
+          </div>
+          <div style="display:flex;gap:var(--s2);align-items:flex-start">
+            <span class="st st-hold" style="flex:none"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-pause"/></svg> On Hold</span>
+            <span class="sub">Pause without losing the stage. Returns to In&nbsp;Transit, or steps back to Ordered.</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<!-- ================= SYSTEM REFERENCE ================= -->
+<div class="sheetlabel">
+  <h2>The system in one screen</h2>
+  <p>Two shapes carry the two axes. A filled pill is a workflow status; a solid fill inside that pill means the state is terminal. An outlined square tag is a payment status. They can never be read as one scale.</p>
+</div>
+<main class="wrap" style="padding-top:0">
+  <section class="card">
+    <h2 class="cardhead">Status — workflow axis <span class="sub">colour + icon + label, never colour alone</span></h2>
+    <div class="legend">
+      <div><span class="st st-submitted"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-clock"/></svg> Submitted</span> waiting on a person</div>
+      <div><span class="st st-approved"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg> Approved</span> decided, not yet bought</div>
+      <div><span class="st st-ordered"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-doc"/></svg> Ordered</span> PO with the vendor</div>
+      <div><span class="st st-transit"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-truck"/></svg> In Transit</span> moving, has an ETA</div>
+      <div><span class="st st-received"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-checkcircle"/></svg> Received</span> terminal, good outcome</div>
+      <div><span class="st st-cancelled"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-slash"/></svg> Cancelled</span> terminal, inert</div>
+      <div><span class="st st-rejected"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-x"/></svg> Rejected</span> recoverable — resubmit</div>
+      <div><span class="st st-hold"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-pause"/></svg> On Hold</span> paused over any stage</div>
+    </div>
+    <h2 class="cardhead" style="border-top:1px solid var(--hairline)">Payment — parallel axis <span class="sub">outlined tag, filled-dot glyph</span></h2>
+    <div class="legend">
+      <div><span class="pay pay-unpaid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-o"/></svg> Unpaid</span> nothing paid</div>
+      <div><span class="pay pay-part"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-h"/></svg> Part paid</span> advance settled</div>
+      <div><span class="pay pay-paid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-f"/></svg> Paid</span> settled in full</div>
+      <div><span class="pay pay-foc"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dash"/></svg> Free of charge</span> no invoice expected</div>
+    </div>
+    <h2 class="cardhead" style="border-top:1px solid var(--hairline)">Palette <span class="sub">five greens → one · six reds → one · two ambers → one</span></h2>
+    <div class="swatches">
+      <div class="sw"><div class="chipc" style="background:#006E16"></div><div class="txt">brand<code>#006E16</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#DAEDDB"></div><div class="txt">brand tint<code>#DAEDDB</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#2A5FAA"></div><div class="txt">blue<code>#2A5FAA</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#8A4A05"></div><div class="txt">amber<code>#8A4A05</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#5340A0"></div><div class="txt">violet<code>#5340A0</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#B3362B"></div><div class="txt">red<code>#B3362B</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#14241C"></div><div class="txt">ink<code>#14241C</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#5E7066"></div><div class="txt">muted<code>#5E7066</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#778D82"></div><div class="txt">border<code>#778D82</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#BFCFC6"></div><div class="txt">hairline<code>#BFCFC6</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#ECF0ED"></div><div class="txt">sunken<code>#ECF0ED</code></div></div>
+      <div class="sw"><div class="chipc" style="background:#F4F7F5"></div><div class="txt">page<code>#F4F7F5</code></div></div>
+    </div>
+    <p class="note">
+      <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-info"/></svg>
+      Try it: tab through this page. Every focusable thing shows the same 2&nbsp;px brand ring at
+      6.48:1. Open a status control with the keyboard — it is a real <span class="num">&lt;select&gt;</span>
+      wearing the chip, so it works without a single line of custom key handling.
+    </p>
+  </section>
+</main>
+
+<script>
+/* Mockup interactivity only — demonstrates the two behaviours the design depends on.
+   Neither is required for the visual system to be read. */
+document.querySelectorAll('.kpi').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('.kpi').forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+    b.setAttribute('aria-pressed', 'true');
+  });
+});
+</script>
+</body>
+</html>
