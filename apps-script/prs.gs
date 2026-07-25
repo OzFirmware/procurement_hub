@@ -107,6 +107,7 @@ registerRoute_('list', { minRole: 'requester' }, function (user) {
     vendors: listVendors_(),
     projects: listProjects_(),
     materialTypes: listMaterialTypes_(),
+    notifications: notificationsFor_(user.email),
     me: { email: user.email, role: user.role, department: user.department }
   };
 });
@@ -158,6 +159,10 @@ registerRoute_('create', { minRole: 'requester' }, function (user, body) {
     prSheet_().appendRow(PR_HEADERS.map(function (h) { return pr[h] || ''; }));
     writeItemsForPr_(pr.id, norm.items);
     log_(user, pr.id, 'create', itemSummary_(norm.items));
+    notify_('pr-created', approversFor_(pr.department), pr.id,
+      (pr.requestedByName || user.email) + ' raised ' + pr.id + ' (' + pr.department + '): ' + itemSummary_(norm.items) +
+      (pr.totalAmount ? ' — total ' + pr.totalAmount + ' ' + (pr.currency || 'INR') : ''),
+      'Procurement Hub: new PR ' + pr.id);
     return { pr: pr };
   });
 });
@@ -213,6 +218,11 @@ registerRoute_('transition', { minRole: 'requester' }, function (user, body) {
     pr.updatedAt = nowIso_();
     writePr_(pr);
     log_(user, pr.id, 'transition', detail);
+    if (to === 'Approved' || to === 'Rejected') {
+      notify_('pr-' + to.toLowerCase(), [pr.requesterEmail], pr.id,
+        'Your PR ' + pr.id + ' was ' + to.toLowerCase() + ' by ' + (user.name || user.email) + '.',
+        'Procurement Hub: ' + pr.id + ' ' + to.toLowerCase());
+    }
     return { pr: pr };
   });
 });

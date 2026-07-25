@@ -12,6 +12,7 @@ function setup() {
   sheet_('Log', LOG_HEADERS);
   var lists = sheet_('Lists', LISTS_HEADERS);
   sheet_('Vendors', VENDOR_HEADERS);
+  sheet_('Notifications', NOTIF_HEADERS);
 
   if (lists.getLastRow() < 2) {
     var maxLen = 0;

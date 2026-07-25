@@ -59,6 +59,12 @@ registerRoute_('userSet', { minRole: 'admin' }, function (user, body) {
           sh.getRange(i + 1, 3).setValue(user.email);
           sh.getRange(i + 1, 4).setValue(nowIso_());
         }
+        // pending → active: tell the person their access now works
+        if (role && !String(data[i][1])) {
+          notify_('access-granted', [email], '',
+            'Your Procurement Hub access is active: ' + role + (dept ? ' (' + dept + ')' : '') + '. Sign in with your @oizom.com account.',
+            'Procurement Hub: access approved');
+        }
         if (!role && dept == null) sh.deleteRow(i + 1);
         var detail = !role && dept == null ? 'removed'
           : (role || 'role unchanged') + (dept != null ? ' / dept: ' + (dept || 'cleared') : '');
@@ -70,6 +76,9 @@ registerRoute_('userSet', { minRole: 'admin' }, function (user, body) {
     ensureDeptHeader_(sh);
     sh.appendRow([email, role, user.email, nowIso_(), dept || '', '']); // name fills on their first sign-in
     log_(user, '', 'userSet', email + ' → ' + role + (dept ? ' / dept: ' + dept : ''));
+    notify_('invited', [email], '',
+      'You have been added to the Oizom Procurement Hub as ' + role + (dept ? ' (' + dept + ')' : '') + '. Sign in with your @oizom.com Google account.',
+      'You’ve been invited to the Oizom Procurement Hub');
     return { users: listUsers_() };
   });
 });

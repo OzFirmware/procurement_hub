@@ -1,4 +1,5 @@
 import './styles.css';
+import { api } from './api.js';
 import { initAuth, renderSignIn, signOut, tokenProfile, getToken } from './auth.js';
 import { store } from './state.js';
 import { esc, displayName, initials, toast } from './ui.js';
@@ -45,6 +46,8 @@ function render() {
   const nav = Object.entries(VIEWS)
     .filter(([, v]) => v.nav && (!v.minRole || RANK[role] >= RANK[v.minRole]))
     .map(([k, v]) => `<a href="#/${k}" class="${name === k ? 'active' : ''}">${v.nav}</a>`).join('');
+  const notifs = s.notifications || [];
+  const unread = notifs.filter(n => !n.readAt).length;
   const prof = tokenProfile() || {};
   const email = prof.email || (s.me ? s.me.email : '');
   const pname = prof.name || displayName(email);
@@ -58,6 +61,19 @@ function render() {
       <button class="iconbtn" id="btnRefresh" title="Refresh now">
         <span class="material-symbols-outlined ${s.loading ? 'spin' : ''}" style="font-size:20px">refresh</span>
       </button>
+      <div class="nbell">
+        <button class="iconbtn" id="nBtn" title="Notifications">
+          <span class="material-symbols-outlined" style="font-size:20px">notifications</span>
+          ${unread ? `<span class="nbadge">${unread > 9 ? '9+' : unread}</span>` : ''}
+        </button>
+        <div class="npanel" id="nPanel" hidden>
+          ${notifs.length ? notifs.map(n => `
+          <div class="nitem ${n.readAt ? '' : 'unread'}" ${n.prId ? `data-pr="${esc(n.prId)}"` : ''}>
+            <div class="nmsg">${esc(n.message)}</div>
+            <div class="ntime">${esc(String(n.ts).slice(0, 16).replace('T', ' '))}</div>
+          </div>`).join('') : '<div class="nempty">Nothing yet.</div>'}
+        </div>
+      </div>
       <div class="profile" id="profileBtn">
         <span class="pname">${esc(pname)}</span>
         ${avatar}
@@ -72,6 +88,18 @@ function render() {
     await store.refresh();
     if (!store.get().err) toast('Data refreshed');
   };
+  const nPanel = document.getElementById('nPanel');
+  document.getElementById('nBtn').onclick = () => {
+    nPanel.hidden = !nPanel.hidden;
+    if (!nPanel.hidden && unread) {
+      // optimistic: clear locally now, persist in the background
+      notifs.forEach(n => { if (!n.readAt) n.readAt = 'now'; });
+      document.querySelector('.nbadge')?.remove();
+      api('notifRead').catch(() => {});
+    }
+  };
+  nPanel.querySelectorAll('.nitem[data-pr]').forEach(it =>
+    it.onclick = () => { location.hash = '#/pr/' + it.dataset.pr; });
   const menu = document.getElementById('pMenu');
   document.getElementById('profileBtn').onclick = e => {
     if (e.target.id !== 'btnOut') menu.hidden = !menu.hidden;

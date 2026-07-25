@@ -1,7 +1,7 @@
 import { api } from './api.js';
 import { decoratePrs } from './lib/items.js';
 
-let state = { prs: [], lists: {}, vendors: [], projects: [], materialTypes: [], me: null, lastSync: null, err: '', loading: false };
+let state = { prs: [], lists: {}, vendors: [], projects: [], materialTypes: [], notifications: [], me: null, lastSync: null, err: '', loading: false };
 const listeners = new Set();
 // Set once a refresh has actually succeeded this session, so a SIGNED_OUT
 // error (expired GIS token) reloads to the auth gate instead of looping
@@ -25,6 +25,7 @@ export const store = {
         vendors: d.vendors || [],
         projects: d.projects || [],
         materialTypes: d.materialTypes || [],
+        notifications: d.notifications || [],
         me: d.me, lastSync: new Date(), err: '', loading: false
       };
     } catch (e) {

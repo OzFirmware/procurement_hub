@@ -93,6 +93,9 @@ function getUserInfo_(email, name) {
       ensureNameHeader_(sh);
       sh.appendRow([email, '', 'self-signup', nowIso_(), '', name || '']);
       SpreadsheetApp.flush();
+      notify_('user-pending', admins_(), '',
+        (name ? name + ' (' + email + ')' : email) + ' signed in and is awaiting approval — assign a role and department in the Admin tab.',
+        'Procurement Hub: new user pending approval');
     }
   } finally {
     regLock.releaseLock();
