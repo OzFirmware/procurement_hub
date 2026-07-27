@@ -2,9 +2,11 @@ import { api } from '../api.js';
 import { toast, esc } from '../ui.js';
 import { fmtMoney } from '../lib/currency.js';
 import { vendorStats } from '../lib/vendorStats.js';
+import { searchBar, wireSearch, noMatchRow, hay } from './adminSearch.js';
 
 let VENDORS = null;   // seeded from store, refreshed from route responses
 let SELECTED = null;  // vendor name open in the detail editor
+let VENDOR_Q = '';    // list filter, survives the re-render every save triggers
 
 const TYPES = ['Domestic', 'International'];
 
@@ -32,6 +34,7 @@ export function vendorsSection(s, showAdd) {
   const rows = [...list].sort((a, b) => a.name.localeCompare(b.name));
   return `
     <div class="adm-card">
+      ${searchBar(VENDOR_Q, 'Search vendors by name, category or department…')}
       ${showAdd ? `
       <div class="adm-addrow">
         <input id="nvName" placeholder="Vendor name" class="adm-input">
@@ -43,7 +46,9 @@ export function vendorsSection(s, showAdd) {
             <th>Vendor</th><th>Departments</th><th>Type</th><th>Category</th><th style="text-align:right">Actions</th>
           </tr></thead>
           <tbody>
-          ${rows.map(v => `<tr class="vRow" data-name="${esc(v.name)}" style="cursor:pointer">
+          ${rows.map(v => `<tr class="vRow" data-name="${esc(v.name)}"
+            data-search="${hay(v.name, v.displayName, v.category, v.type, (v.departments || []).join(' '))}"
+            style="cursor:pointer">
             <td class="adm-name">${esc(v.name)}</td>
             <td>${(v.departments || []).map(d => `<span class="adm-chip on">${esc(d)}</span>`).join(' ') || '<span class="adm-email">—</span>'}</td>
             <td>${esc(v.type || '—')}</td>
@@ -54,12 +59,17 @@ export function vendorsSection(s, showAdd) {
               </button>
             </td>
           </tr>`).join('') || '<tr><td colspan="5" style="color:var(--adm-on-var)">No vendors yet — add the first one.</td></tr>'}
+          ${noMatchRow(5, 'No vendor matches that name, category or department.')}
           </tbody>
         </table>
       </div>
-      <div class="adm-foot"><span>Showing ${rows.length} vendor${rows.length === 1 ? '' : 's'}</span></div>
+      <div class="adm-foot"><span class="adm-count">${vendorCount(rows.length, rows.length)}</span></div>
     </div>`;
 }
+
+const vendorCount = (shown, total) => shown === total
+  ? `Showing ${total} vendor${total === 1 ? '' : 's'}`
+  : `Showing ${shown} of ${total} vendors`;
 
 function detailHtml(s, v) {
   const k = vendorStats(s.prs, v.name);
@@ -147,7 +157,12 @@ export function wireVendors(el, s, rerender) {
     } catch (e) { toast(e.message, true); }
   };
 
-  // list view
+  // list view — no-ops in the detail view, which renders no search box
+  wireSearch(el, {
+    get: () => VENDOR_Q,
+    set: v => { VENDOR_Q = v; },
+    count: vendorCount
+  });
   el.querySelectorAll('.vRow').forEach(r => r.onclick = e => {
     if (e.target.closest('.vRm')) return;
     SELECTED = r.dataset.name;

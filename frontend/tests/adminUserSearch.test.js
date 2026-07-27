@@ -19,7 +19,7 @@ const { adminView } = await import('../src/views/admin.js');
 let el;
 const visible = () => [...el.querySelectorAll('.adm-tbl tbody tr[data-search]')].filter(tr => !tr.hidden);
 const type = q => {
-  const box = el.querySelector('#userSearch');
+  const box = el.querySelector('#admSearch');
   box.value = q;
   box.oninput();
   return box;
@@ -32,22 +32,22 @@ beforeEach(async () => {
   adminView(el, STATE);
   await Promise.resolve();     // let the mocked usersList resolve and re-render
   await Promise.resolve();
-  const box = el.querySelector('#userSearch');
+  const box = el.querySelector('#admSearch');
   if (box && box.value) { box.value = ''; box.oninput(); }   // clear module-level USER_Q
 });
 
 describe('user search', () => {
   it('renders every user with no query', () => {
     expect(visible()).toHaveLength(4);
-    expect(el.querySelector('#userCount').textContent).toBe('Showing 4 of 4 active members');
-    expect(el.querySelector('#userNoMatch').hidden).toBe(true);
+    expect(el.querySelector('.adm-count').textContent).toBe('Showing 4 of 4 active members');
+    expect(el.querySelector('.adm-nomatch').hidden).toBe(true);
   });
 
   it('matches on name, case-insensitively', () => {
     type('KEVIN');
     expect(visible().map(tr => tr.querySelector('.adm-email').textContent))
       .toEqual(['firmware@oizom.com']);
-    expect(el.querySelector('#userCount').textContent).toBe('Showing 1 of 4 active members');
+    expect(el.querySelector('.adm-count').textContent).toBe('Showing 1 of 4 active members');
   });
 
   it('matches on email', () => {
@@ -65,8 +65,8 @@ describe('user search', () => {
   it('shows an empty state when nothing matches', () => {
     type('zzz');
     expect(visible()).toHaveLength(0);
-    expect(el.querySelector('#userNoMatch').hidden).toBe(false);
-    expect(el.querySelector('#userCount').textContent).toBe('Showing 0 of 4 active members');
+    expect(el.querySelector('.adm-nomatch').hidden).toBe(false);
+    expect(el.querySelector('.adm-count').textContent).toBe('Showing 0 of 4 active members');
   });
 
   it('strips the bottom border from the last visible row only', () => {
@@ -79,16 +79,16 @@ describe('user search', () => {
   it('survives the full re-render fired by a role/department change', () => {
     type('jaydeep');
     adminView(el, STATE);                       // what setUser() does after saving
-    expect(el.querySelector('#userSearch').value).toBe('jaydeep');
+    expect(el.querySelector('#admSearch').value).toBe('jaydeep');
     expect(visible().map(tr => tr.querySelector('.adm-name').textContent))
       .toEqual(['Jaydeep Rathod']);
-    expect(el.querySelector('#userCount').textContent).toBe('Showing 1 of 4 active members');
+    expect(el.querySelector('.adm-count').textContent).toBe('Showing 1 of 4 active members');
   });
 
   it('clears the query from the clear button', () => {
     type('kevin');
-    el.querySelector('#userSearchClear').onclick();
-    expect(el.querySelector('#userSearch').value).toBe('');
+    el.querySelector('.admSearchClear').onclick();
+    expect(el.querySelector('#admSearch').value).toBe('');
     expect(visible()).toHaveLength(4);
   });
 });

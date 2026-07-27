@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { toast, esc, displayName, initials } from '../ui.js';
 import { vendorsSection, wireVendors, resetVendorPanel } from './adminVendors.js';
+import { searchBar, wireSearch, noMatchRow, hay } from './adminSearch.js';
 
 const ROLES = ['admin', 'approver', 'requester'];
 const ROLE_INFO = {
@@ -19,16 +20,17 @@ let PROJECTS = null;
 let MTYPES = null;
 let showAdd = false;
 
-// Department→value mappings share one UI (Projects, Item Types)
+// Department→value mappings share one UI (Projects, Item Types) but keep
+// separate search queries — `q` lives on the config, not on one shared global
 const MAPPINGS = {
   projects: {
-    key: 'project', label: 'Project', respKey: 'projects',
-    addRoute: 'projectAdd', removeRoute: 'projectRemove',
+    key: 'project', label: 'Project', respKey: 'projects', plural: 'projects',
+    addRoute: 'projectAdd', removeRoute: 'projectRemove', q: '',
     get: () => PROJECTS, set: v => { PROJECTS = v; }, seed: s => s.projects
   },
   types: {
-    key: 'materialType', label: 'Item type', respKey: 'materialTypes',
-    addRoute: 'materialTypeAdd', removeRoute: 'materialTypeRemove',
+    key: 'materialType', label: 'Item type', respKey: 'materialTypes', plural: 'item types',
+    addRoute: 'materialTypeAdd', removeRoute: 'materialTypeRemove', q: '',
     get: () => MTYPES, set: v => { MTYPES = v; }, seed: s => s.materialTypes
   }
 };
@@ -132,16 +134,7 @@ function usersSection(s) {
       </div>
     </div>
     <div class="adm-card">
-      <div class="adm-toolbar">
-        <div class="adm-search">
-          <span class="material-symbols-outlined">search</span>
-          <input id="userSearch" type="search" autocomplete="off" spellcheck="false"
-                 placeholder="Search by name or email…" value="${esc(USER_Q)}">
-          <button type="button" id="userSearchClear" title="Clear search" ${USER_Q ? '' : 'hidden'}>
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-      </div>
+      ${searchBar(USER_Q, 'Search by name or email…')}
       ${showAdd ? `
       <div class="adm-addrow">
         <input id="newEmail" placeholder="person@oizom.com" class="adm-input">
@@ -159,7 +152,7 @@ function usersSection(s) {
             // search haystack = what the row actually shows, so users with no
             // name in the sheet still match on their derived display name
             const shown = u.name || displayName(u.email);
-            return `<tr data-search="${esc(`${shown} ${u.email}`.toLowerCase())}">
+            return `<tr data-search="${hay(shown, u.email)}">
             <td>
               <div class="adm-user">
                 <div class="adm-avatar" style="background:${avatarBg(u.email)}">${esc(initials(u.email))}${
@@ -182,14 +175,12 @@ function usersSection(s) {
             </td>
           </tr>`;
           }).join('')}
-          <tr id="userNoMatch" hidden>
-            <td colspan="5" style="color:var(--adm-on-var)">No member matches that name or email.</td>
-          </tr>
+          ${noMatchRow(5, 'No member matches that name or email.')}
           </tbody>
         </table>
       </div>
       <div class="adm-foot">
-        <span id="userCount">Showing ${USERS.length} of ${USERS.length} active members</span>
+        <span class="adm-count">Showing ${USERS.length} of ${USERS.length} active members</span>
         <div class="adm-pager">
           <button disabled><span class="material-symbols-outlined" style="font-size:18px">chevron_left</span></button>
           <span>Page 1 of 1</span>
@@ -206,16 +197,11 @@ function usersSection(s) {
 }
 
 function wireUsers(el, s) {
-  applyUserFilter(el);
-  const box = el.querySelector('#userSearch');
-  const clear = el.querySelector('#userSearchClear');
-  box.oninput = () => {
-    USER_Q = box.value;
-    clear.hidden = !USER_Q;
-    applyUserFilter(el);
-  };
-  box.onkeydown = e => { if (e.key === 'Escape' && USER_Q) { box.value = ''; box.oninput(); } };
-  clear.onclick = () => { box.value = ''; box.oninput(); box.focus(); };
+  wireSearch(el, {
+    get: () => USER_Q,
+    set: v => { USER_Q = v; },
+    count: (shown, total) => `Showing ${shown} of ${total} active members`
+  });
 
   const setUser = async (email, fields, msg) => {
     try {
@@ -244,25 +230,6 @@ function wireUsers(el, s) {
   };
 }
 
-// Filters rows in place instead of re-rendering: a re-render would drop focus
-// out of the search box and force every row handler to be rewired per keystroke.
-function applyUserFilter(el) {
-  const q = USER_Q.trim().toLowerCase();
-  const rows = [...el.querySelectorAll('.adm-tbl tbody tr[data-search]')];
-  let last = null;
-  rows.forEach(tr => {
-    tr.hidden = q ? !tr.dataset.search.includes(q) : false;
-    tr.classList.remove('last-visible');
-    if (!tr.hidden) last = tr;
-  });
-  // :last-child would target a hidden row, leaving a stray border mid-table
-  if (last) last.classList.add('last-visible');
-  el.querySelector('#userNoMatch').hidden = !!last || !rows.length;
-  const shown = rows.filter(tr => !tr.hidden).length;
-  el.querySelector('#userCount').textContent =
-    `Showing ${shown} of ${rows.length} active members`;
-}
-
 /* ---------- Department mappings (Projects, Item Types) ---------- */
 function depts(s) {
   const fromLists = (s.lists && s.lists.departments) || [];
@@ -275,6 +242,7 @@ function mappingSection(s, cfg) {
     a.department.localeCompare(b.department) || a[cfg.key].localeCompare(b[cfg.key]));
   return `
     <div class="adm-card">
+      ${searchBar(cfg.q, `Search ${cfg.plural} by name or department…`)}
       ${showAdd ? `
       <div class="adm-addrow">
         <select id="mpDept" class="adm-select" style="width:auto">
@@ -289,7 +257,7 @@ function mappingSection(s, cfg) {
             <th>Department</th><th>${esc(cfg.label)}</th><th style="text-align:right">Actions</th>
           </tr></thead>
           <tbody>
-          ${rows.map(p => `<tr>
+          ${rows.map(p => `<tr data-search="${hay(p.department, p[cfg.key])}">
             <td class="adm-name">${esc(p.department)}</td>
             <td>${esc(p[cfg.key])}</td>
             <td style="text-align:right">
@@ -298,16 +266,27 @@ function mappingSection(s, cfg) {
               </button>
             </td>
           </tr>`).join('') || `<tr><td colspan="3" style="color:var(--adm-on-var)">Nothing listed yet — add the first one.</td></tr>`}
+          ${noMatchRow(3, `No ${cfg.label.toLowerCase()} matches that name or department.`)}
           </tbody>
         </table>
       </div>
       <div class="adm-foot">
-        <span>Showing ${rows.length} ${esc(cfg.label.toLowerCase())}${rows.length === 1 ? '' : 's'}</span>
+        <span class="adm-count">${countLabel(rows.length, rows.length, cfg)}</span>
       </div>
     </div>`;
 }
 
+const countLabel = (shown, total, cfg) => shown === total
+  ? `Showing ${total} ${cfg.label.toLowerCase()}${total === 1 ? '' : 's'}`
+  : `Showing ${shown} of ${total} ${cfg.label.toLowerCase()}s`;
+
 function wireMapping(el, s, cfg) {
+  wireSearch(el, {
+    get: () => cfg.q,
+    set: v => { cfg.q = v; },
+    count: (shown, total) => countLabel(shown, total, cfg)
+  });
+
   const call = async (action, body, msg) => {
     try {
       const d = await api(action, body);
