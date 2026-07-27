@@ -119,12 +119,25 @@ form.pr .full{grid-column:1/-1}
 .adm-addrow{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:16px 24px;background:var(--adm-low);border-bottom:1px solid var(--adm-outline)}
 .adm-input{flex:1;min-width:220px;background:var(--adm-surface);border:1px solid var(--adm-outline);border-radius:8px;
   padding:8px 12px;font-size:14px;font-family:inherit;color:var(--adm-primary)}
+.adm-toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:16px 24px;border-bottom:1px solid var(--adm-outline)}
+.adm-search{display:flex;align-items:center;gap:8px;flex:1;min-width:240px;max-width:420px;
+  background:var(--adm-surface);border:1px solid var(--adm-outline);border-radius:8px;padding:0 10px;transition:all .15s}
+.adm-search:focus-within{border-color:var(--adm-primary);box-shadow:0 0 0 2px rgba(19,37,53,.2)}
+.adm-search>.material-symbols-outlined{font-size:20px;color:var(--adm-on-var);flex:none}
+.adm-search input{flex:1;min-width:0;border:none;background:none;outline:none;padding:9px 0;
+  font-size:14px;line-height:20px;font-family:inherit;color:var(--adm-primary)}
+.adm-search input::-webkit-search-cancel-button{display:none}
+.adm-search button{border:none;background:none;cursor:pointer;color:var(--adm-on-var);padding:2px;
+  border-radius:9999px;display:flex;flex:none}
+.adm-search button:hover{color:var(--adm-primary)}
+.adm-search button .material-symbols-outlined{font-size:18px}
 .adm-tbl{width:100%;text-align:left;border-collapse:collapse}
 .adm-tbl thead tr{background:var(--adm-low);border-bottom:1px solid var(--adm-outline)}
 .adm-tbl th{padding:16px 24px;font-size:11px;line-height:12px;font-weight:600;color:var(--adm-on-var);
   text-transform:uppercase;letter-spacing:.05em}
 .adm-tbl td{padding:24px;border-bottom:1px solid var(--adm-outline)}
-.adm-tbl tbody tr:last-child td{border-bottom:none}
+.adm-tbl tbody tr:last-child td,
+.adm-tbl tbody tr.last-visible td{border-bottom:none}
 .adm-tbl tbody tr{transition:background .15s}
 .adm-tbl tbody tr:hover{background:var(--adm-low)}
 .adm-user{display:flex;align-items:center;gap:16px}

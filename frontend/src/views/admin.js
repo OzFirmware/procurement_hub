@@ -12,6 +12,9 @@ const ROLE_INFO = {
 const AVATAR_BGS = ['#d1e5f7', '#8cfb85', '#d1e5f9', '#e4e2e1'];
 let TAB = 'users';
 let USERS = null;
+// live user filter — module scope so it survives the full re-render that
+// every role/department/remove action triggers
+let USER_Q = '';
 let PROJECTS = null;
 let MTYPES = null;
 let showAdd = false;
@@ -129,6 +132,16 @@ function usersSection(s) {
       </div>
     </div>
     <div class="adm-card">
+      <div class="adm-toolbar">
+        <div class="adm-search">
+          <span class="material-symbols-outlined">search</span>
+          <input id="userSearch" type="search" autocomplete="off" spellcheck="false"
+                 placeholder="Search by name or email…" value="${esc(USER_Q)}">
+          <button type="button" id="userSearchClear" title="Clear search" ${USER_Q ? '' : 'hidden'}>
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
       ${showAdd ? `
       <div class="adm-addrow">
         <input id="newEmail" placeholder="person@oizom.com" class="adm-input">
@@ -142,13 +155,17 @@ function usersSection(s) {
             <th>User Details</th><th>Role Assignment</th><th>Department</th><th>Status</th><th style="text-align:right">Actions</th>
           </tr></thead>
           <tbody>
-          ${[...USERS].sort((a, b) => (a.role ? 1 : 0) - (b.role ? 1 : 0)).map(u => `<tr>
+          ${[...USERS].sort((a, b) => (a.role ? 1 : 0) - (b.role ? 1 : 0)).map(u => {
+            // search haystack = what the row actually shows, so users with no
+            // name in the sheet still match on their derived display name
+            const shown = u.name || displayName(u.email);
+            return `<tr data-search="${esc(`${shown} ${u.email}`.toLowerCase())}">
             <td>
               <div class="adm-user">
                 <div class="adm-avatar" style="background:${avatarBg(u.email)}">${esc(initials(u.email))}${
                   u.picture ? `<img src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()">` : ''}</div>
                 <div>
-                  <div class="adm-name">${esc(u.name || displayName(u.email))}</div>
+                  <div class="adm-name">${esc(shown)}</div>
                   <div class="adm-email">${esc(u.email)}</div>
                 </div>
               </div>
@@ -163,12 +180,16 @@ function usersSection(s) {
                 <span class="material-symbols-outlined">delete</span>
               </button>
             </td>
-          </tr>`).join('')}
+          </tr>`;
+          }).join('')}
+          <tr id="userNoMatch" hidden>
+            <td colspan="5" style="color:var(--adm-on-var)">No member matches that name or email.</td>
+          </tr>
           </tbody>
         </table>
       </div>
       <div class="adm-foot">
-        <span>Showing ${USERS.length} of ${USERS.length} active members</span>
+        <span id="userCount">Showing ${USERS.length} of ${USERS.length} active members</span>
         <div class="adm-pager">
           <button disabled><span class="material-symbols-outlined" style="font-size:18px">chevron_left</span></button>
           <span>Page 1 of 1</span>
@@ -185,6 +206,17 @@ function usersSection(s) {
 }
 
 function wireUsers(el, s) {
+  applyUserFilter(el);
+  const box = el.querySelector('#userSearch');
+  const clear = el.querySelector('#userSearchClear');
+  box.oninput = () => {
+    USER_Q = box.value;
+    clear.hidden = !USER_Q;
+    applyUserFilter(el);
+  };
+  box.onkeydown = e => { if (e.key === 'Escape' && USER_Q) { box.value = ''; box.oninput(); } };
+  clear.onclick = () => { box.value = ''; box.oninput(); box.focus(); };
+
   const setUser = async (email, fields, msg) => {
     try {
       const d = await api('userSet', { email, ...fields });
@@ -210,6 +242,25 @@ function wireUsers(el, s) {
     const department = el.querySelector('#newDept').value;
     setUser(email, { role, department }, `${email} → ${role}`);
   };
+}
+
+// Filters rows in place instead of re-rendering: a re-render would drop focus
+// out of the search box and force every row handler to be rewired per keystroke.
+function applyUserFilter(el) {
+  const q = USER_Q.trim().toLowerCase();
+  const rows = [...el.querySelectorAll('.adm-tbl tbody tr[data-search]')];
+  let last = null;
+  rows.forEach(tr => {
+    tr.hidden = q ? !tr.dataset.search.includes(q) : false;
+    tr.classList.remove('last-visible');
+    if (!tr.hidden) last = tr;
+  });
+  // :last-child would target a hidden row, leaving a stray border mid-table
+  if (last) last.classList.add('last-visible');
+  el.querySelector('#userNoMatch').hidden = !!last || !rows.length;
+  const shown = rows.filter(tr => !tr.hidden).length;
+  el.querySelector('#userCount').textContent =
+    `Showing ${shown} of ${rows.length} active members`;
 }
 
 /* ---------- Department mappings (Projects, Item Types) ---------- */
