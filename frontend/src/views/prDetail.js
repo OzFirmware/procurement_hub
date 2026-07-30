@@ -1,6 +1,7 @@
 import { api } from '../api.js';
 import { store } from '../state.js';
-import { toast, esc, chip, fmtDate, initials, displayName } from '../ui.js';
+import { toast, esc, chip, fmtDate, initials } from '../ui.js';
+import { nameIndex, personName } from '../lib/people.js';
 import { nextStates } from '../lib/status.js';
 import { fmtMoney } from '../lib/currency.js';
 
@@ -22,7 +23,7 @@ const person = (label, name, email, sub) => `
     <span class="avatar avatar-txt">${esc(initials(email || name))}</span>
     <div>
       <span class="vc-l">${esc(label)}</span>
-      <b>${esc(name || displayName(email))}</b>
+      <b>${esc(name)}</b>
       <div class="pd-sub">${esc(sub || '')}</div>
     </div>
   </div>`;
@@ -31,6 +32,9 @@ export function prDetailView(el, s, id) {
   const p = s.prs.find(x => x.id === id);
   if (!p) { el.innerHTML = `<div class="card">PR ${esc(id)} not found ${s.prs.length ? '' : '(still syncing…)'}</div>`; return; }
   const me = s.me || { role: '', email: '' };
+  // built from every PR, not just this one — an approver whose name cell is
+  // empty here is usually named on some other row
+  const names = nameIndex(s.prs);
   const isOwn = p.requesterEmail.toLowerCase() === me.email.toLowerCase();
   const isStaff = ['approver', 'admin'].includes(me.role);
   const canEdit = isStaff || (isOwn && p.status === 'Submitted');
@@ -63,9 +67,9 @@ export function prDetailView(el, s, id) {
           ${field('Payment status', esc(p.paymentStatus))}
         </div>
         <div class="pd-people">
-          ${person('Requested by', p.requestedByName, p.requesterEmail, 'Created on ' + fmtDate(p.createdAt))}
+          ${person('Requested by', personName(p.requestedByName, p.requesterEmail, names), p.requesterEmail, 'Created on ' + fmtDate(p.createdAt))}
           ${(p.approverEmail || p.approvedByName)
-            ? person('Approved by', p.approvedByName, p.approverEmail, p.approvedAt ? 'on ' + fmtDate(p.approvedAt) : '')
+            ? person('Approved by', personName(p.approvedByName, p.approverEmail, names), p.approverEmail, p.approvedAt ? 'on ' + fmtDate(p.approvedAt) : '')
             : ''}
         </div>
         </div>
