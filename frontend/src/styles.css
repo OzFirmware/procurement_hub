@@ -216,6 +216,10 @@ span.adm-chip{cursor:default;padding:2px 8px;font-size:11px}
 @media (max-width: 900px) { .itemrow { grid-template-columns: 1fr 1fr; } }
 
 /* ===== vendors tab ===== */
+/* .adm-toolbar is sized to sit inside an .adm-card; on the vendors page it
+   stands alone, so drop the card padding and the divider it would leave. */
+.vsearch .adm-toolbar{padding:0;border-bottom:none;margin-bottom:14px}
+.vsearch .adm-search{max-width:none}
 .vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 .vcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:12px}
 .vcard:hover{border-color:var(--disp)}

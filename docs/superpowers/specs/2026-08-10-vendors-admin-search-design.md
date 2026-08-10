@@ -45,6 +45,16 @@ The guard runs on the role in `store` state. Before the first sync the role is
 unknown; the guard must not bounce an admin off a deep link merely because the
 session has not loaded yet. It therefore only redirects once `me` is known.
 
+**As built:** the rule lives in `frontend/src/lib/access.js` as
+`canAccess(view, me)`, alongside the `RANK` table moved out of `main.js`. Inline
+in `render()` it would have been untestable — `main.js` initialises auth and the
+store on import. Extracting it also means the nav filter and the route guard
+read their ranking from one place, so a view cannot end up linkable but
+unreachable, or reachable but unlinked.
+
+A signed-in user whose role is unrecognised (empty or unknown string) fails the
+check rather than passing it.
+
 ### Scope boundary — this is a UI boundary, not a security one
 
 The `list` route returns `vendors` to every caller and must continue to: the PR
@@ -74,8 +84,14 @@ Pure functions, no DOM, no store access, unit-testable in isolation.
 
 ```js
 export function searchVendors(vendors, query)  // → filtered, ranked array
-export function scoreVendor(vendor, terms)     // → number, 0 = no match
+export function scoreVendor(vendor, query)     // → number, 0 = no match
+export function terms(query)                   // → normalised search terms
 ```
+
+`scoreVendor` takes the raw query and tokenises internally, so it can be called
+and tested without the caller knowing how tokenisation works. It also accepts an
+already-tokenised array, which is how `searchVendors` avoids re-splitting the
+query once per vendor.
 
 **Fields searched, by weight:**
 
@@ -144,6 +160,12 @@ entity does not have two different search behaviours. The admin list keeps its
 existing table + `wireSearch` DOM-filtering mechanics; only the *matching
 function* is shared.
 
+**As built:** `wireSearch()` gains an optional `match(query)` option returning
+the set of `data-name` values to show. Tabs that pass nothing keep plain
+substring filtering unchanged; Admin → Vendors passes a matcher backed by
+`searchVendors`. The set is computed once per keystroke rather than once per
+row.
+
 ## Testing
 
 `frontend/tests/vendorSearch.test.js`, vitest, against realistic vendor records:
@@ -155,6 +177,9 @@ function* is shared.
 - `ahmedabad fab` requires both terms (AND semantics)
 - empty query returns every vendor, order unchanged
 - banking fields never match, even on an exact account number
+
+`frontend/tests/access.test.js` covers the route guard: each role against each
+`minRole`, the unknown-session case, and an unrecognised role.
 
 ## Out of scope
 
