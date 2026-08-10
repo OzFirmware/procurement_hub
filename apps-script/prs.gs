@@ -211,7 +211,14 @@ registerRoute_('transition', { minRole: 'requester' }, function (user, body) {
       throw new Error('Cannot move ' + pr.id + ' from ' + pr.status + ' to ' + to + ' as ' + user.role);
     }
     var detail = pr.status + ' → ' + to;
-    if (to === 'Approved' || to === 'Rejected') { pr.approverEmail = user.email; pr.approvedAt = nowIso_(); }
+    // record the name alongside the email, the way create does for the
+    // requester — without it the row has no name and the UI has to guess one
+    // from the address
+    if (to === 'Approved' || to === 'Rejected') {
+      pr.approverEmail = user.email;
+      pr.approvedByName = user.name || '';
+      pr.approvedAt = nowIso_();
+    }
     if (to === 'Received') pr.receivedAt = nowIso_();
     if (to === 'Submitted') { pr.approverEmail = ''; pr.approvedByName = ''; pr.approvedAt = ''; pr.receivedAt = ''; }
     pr.status = to;
