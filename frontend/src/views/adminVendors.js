@@ -3,6 +3,7 @@ import { toast, esc } from '../ui.js';
 import { fmtMoney } from '../lib/currency.js';
 import { vendorStats } from '../lib/vendorStats.js';
 import { searchBar, wireSearch, noMatchRow, hay } from './adminSearch.js';
+import { searchVendors } from '../lib/vendorSearch.js';
 
 let VENDORS = null;   // seeded from store, refreshed from route responses
 let SELECTED = null;  // vendor name open in the detail editor
@@ -34,7 +35,7 @@ export function vendorsSection(s, showAdd) {
   const rows = [...list].sort((a, b) => a.name.localeCompare(b.name));
   return `
     <div class="adm-card">
-      ${searchBar(VENDOR_Q, 'Search vendors by name, category or department…')}
+      ${searchBar(VENDOR_Q, 'Search vendors — try “sensor”, “fab”, “ahmedabad”…')}
       ${showAdd ? `
       <div class="adm-addrow">
         <input id="nvName" placeholder="Vendor name" class="adm-input">
@@ -161,7 +162,9 @@ export function wireVendors(el, s, rerender) {
   wireSearch(el, {
     get: () => VENDOR_Q,
     set: v => { VENDOR_Q = v; },
-    count: vendorCount
+    count: vendorCount,
+    // same matcher as the Vendors page, so one entity doesn't behave two ways
+    match: q => new Set(searchVendors(vendors(s), q).map(v => v.name))
   });
   el.querySelectorAll('.vRow').forEach(r => r.onclick = e => {
     if (e.target.closest('.vRm')) return;

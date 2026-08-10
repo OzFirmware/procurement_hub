@@ -8,17 +8,17 @@ import { vendorsView } from './views/vendors.js';
 import { prFormView } from './views/prForm.js';
 import { prDetailView } from './views/prDetail.js';
 import { adminView } from './views/admin.js';
+import { RANK, canAccess } from './lib/access.js';
 
 const app = document.getElementById('app');
 
 const VIEWS = {
   '': { fn: dashboardView, nav: 'Dashboard' },
-  'vendors': { fn: vendorsView, nav: 'Vendors' },
+  'vendors': { fn: vendorsView, nav: 'Vendors', minRole: 'admin' },
   'new': { fn: prFormView, minRole: 'requester' },
   'pr': { fn: prDetailView },
   'admin': { fn: adminView, nav: 'Admin', minRole: 'admin' }
 };
-const RANK = { requester: 0, approver: 1, admin: 2 };
 
 function route() {
   const parts = location.hash.replace(/^#\/?/, '').split('/');
@@ -43,6 +43,12 @@ function render() {
   const { name, param } = route();
   const view = VIEWS[name] || VIEWS[''];
   const role = s.me ? s.me.role : '';
+  // minRole used to hide the nav link and nothing else, so typing #/vendors or
+  // #/admin rendered the view for anyone who knew the URL.
+  if (!canAccess(view, s.me)) {
+    location.hash = '#/';
+    return;
+  }
   const nav = Object.entries(VIEWS)
     .filter(([, v]) => v.nav && (!v.minRole || RANK[role] >= RANK[v.minRole]))
     .map(([k, v]) => `<a href="#/${k}" class="${name === k ? 'active' : ''}">${v.nav}</a>`).join('');

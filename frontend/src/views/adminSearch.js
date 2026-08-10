@@ -30,12 +30,15 @@ export function noMatchRow(cols, msg) {
   return `<tr class="adm-nomatch" hidden><td colspan="${cols}" style="color:var(--adm-on-var)">${esc(msg)}</td></tr>`;
 }
 
-export function wireSearch(el, { get, set, count, id = 'admSearch' }) {
+// `match` is optional: given the query it returns a Set of `data-name` values
+// to show, letting a tab swap in a smarter matcher (see adminVendors) while
+// tabs that pass nothing keep plain substring filtering.
+export function wireSearch(el, { get, set, count, id = 'admSearch', match = null }) {
   const box = el.querySelector('#' + id);
   if (!box) return;                       // tab has no search (e.g. vendor detail view)
   const card = box.closest('.adm-card');
   const clear = card.querySelector('.admSearchClear');
-  const run = () => applyFilter(card, get(), count);
+  const run = () => applyFilter(card, get(), count, match);
   box.oninput = () => {
     set(box.value);
     clear.hidden = !box.value;
@@ -46,12 +49,16 @@ export function wireSearch(el, { get, set, count, id = 'admSearch' }) {
   run();                                  // re-apply a query that survived a re-render
 }
 
-function applyFilter(card, query, count) {
+function applyFilter(card, query, count, match) {
   const q = query.trim().toLowerCase();
   const rows = [...card.querySelectorAll('tbody tr[data-search]')];
+  // computed once per keystroke, not once per row
+  const allowed = q && match ? match(q) : null;
   let last = null;
   rows.forEach(tr => {
-    tr.hidden = q ? !tr.dataset.search.includes(q) : false;
+    tr.hidden = !q ? false
+      : allowed ? !allowed.has(tr.dataset.name)
+      : !tr.dataset.search.includes(q);
     tr.classList.remove('last-visible');
     if (!tr.hidden) last = tr;
   });

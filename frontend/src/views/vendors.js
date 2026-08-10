@@ -1,6 +1,12 @@
 import { esc, chip, fmtDate } from '../ui.js';
 import { fmtCompact } from '../lib/currency.js';
 import { vendorStats, vendorBadge, vendorPrs } from '../lib/vendorStats.js';
+import { searchVendors } from '../lib/vendorSearch.js';
+import { searchBar } from './adminSearch.js';
+
+// Survives the re-render every store refresh triggers, the way VENDOR_Q does
+// in adminVendors.js.
+let QUERY = '';
 
 const BADGE_CLS = { Domestic: 'dom', Foreign: 'for', Mixed: 'mix' };
 
@@ -57,10 +63,22 @@ function cardHtml(s, v) {
     </div>`;
 }
 
+const alphabetical = vendors => [...(vendors || [])]
+  .sort((a, b) => (a.displayName || a.name).localeCompare(b.displayName || b.name));
+
+// Ranked results must keep their order, so an empty query is the only case that
+// sorts by name — searchVendors already returns best-match-first.
+function gridHtml(s, q) {
+  const all = alphabetical(s.vendors);
+  const list = q.trim() ? searchVendors(all, q) : all;
+  if (list.length) return list.map(v => cardHtml(s, v)).join('');
+  return all.length
+    ? `<div class="card" style="color:var(--mut)">No vendors match “${esc(q)}”.</div>`
+    : '<div class="card" style="color:var(--mut)">No vendors yet — an admin can add them in Admin → Vendors.</div>';
+}
+
 export function vendorsView(el, s, param) {
   if (param) return detailView(el, s, decodeURIComponent(param));
-  const list = [...(s.vendors || [])]
-    .sort((a, b) => (a.displayName || a.name).localeCompare(b.displayName || b.name));
   el.innerHTML = `
     <div class="dash">
       <div class="adm-head">
@@ -69,12 +87,29 @@ export function vendorsView(el, s, param) {
           <p>Registered vendors and their purchase activity.</p>
         </div>
       </div>
-      <div class="vgrid">
-        ${list.map(v => cardHtml(s, v)).join('')
-          || '<div class="card" style="color:var(--mut)">No vendors yet — an admin can add them in Admin → Vendors.</div>'}
-      </div>
+      <div class="vsearch">${searchBar(QUERY, 'Search vendors — try “sensor”, “fab”, “ahmedabad”…', 'vendorSearch')}</div>
+      <div class="vgrid" id="vgrid">${gridHtml(s, QUERY)}</div>
     </div>`;
-  el.querySelectorAll('.vcard').forEach(c =>
+
+  const grid = el.querySelector('#vgrid');
+  const box = el.querySelector('#vendorSearch');
+  const clear = el.querySelector('.admSearchClear');
+  // Repaint only the grid, never the whole view: re-rendering the input would
+  // drop focus and the caret on every keystroke.
+  const run = () => {
+    QUERY = box.value;
+    clear.hidden = !QUERY;
+    grid.innerHTML = gridHtml(s, QUERY);
+    wireCards(grid);
+  };
+  box.oninput = run;
+  box.onkeydown = e => { if (e.key === 'Escape' && box.value) { box.value = ''; run(); } };
+  clear.onclick = () => { box.value = ''; run(); box.focus(); };
+  wireCards(grid);
+}
+
+function wireCards(grid) {
+  grid.querySelectorAll('.vcard').forEach(c =>
     c.onclick = () => location.hash = '#/vendors/' + encodeURIComponent(c.dataset.name));
 }
 
