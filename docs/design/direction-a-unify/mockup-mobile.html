@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction A — Unify · Mobile · Oizom Procurement Hub</title>
+<style>
+/* ============================================================
+   DIRECTION A — "UNIFY" · MOBILE
+   Identical token set to mockup-desktop.html. Nothing on this
+   page uses a value that is not declared in :root below.
+   Screens are pinned inside fixed 390x844 frames so they can be
+   judged at real size rather than by dragging a window.
+   ============================================================ */
+:root{
+  --surface:#FFFFFF; --bg:#F4F7F5; --sunken:#ECF0ED;
+  --dark:#0F1F18; --dark-2:#16291F; --on-dark:#FFFFFF; --on-dark-mut:#CFE0D7;
+  --hairline:#BFCFC6; --border:#778D82;
+  --ink:#14241C; --mut:#5E7066;
+  --brand:#006E16; --brand-tint:#DAEDDB;
+  --blue:#2A5FAA; --blue-tint:#E4ECF8;
+  --amber:#8A4A05; --amber-tint:#FBEEDC;
+  --violet:#5340A0; --violet-tint:#EAE6F7;
+  --red:#B3362B; --red-tint:#FAE6E3;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --num:ui-monospace,SFMono-Regular,"SF Mono","IBM Plex Mono",Menlo,Consolas,monospace;
+  --t-micro:11px; --t-sm:12px; --t-base:14px; --t-md:16px; --t-lg:20px; --t-xl:28px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px;
+  --r1:6px; --r2:10px; --rf:999px;
+  --e1:0 1px 2px rgba(20,36,28,.06),0 1px 3px rgba(20,36,28,.05);
+  --e2:0 10px 28px -10px rgba(20,36,28,.28);
+  --dur:140ms; --ease:cubic-bezier(.2,0,0,1);
+  --tap:44px;               /* every interactive target clears this */
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#DDE5E0;color:var(--ink);font-family:var(--ui);font-size:var(--t-base);line-height:1.45;
+  padding:var(--s5) var(--s4) var(--s6)}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:var(--r1)}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- mockup scaffolding (not part of the system) ---------- */
+.intro{max-width:1180px;margin:0 auto var(--s5)}
+.intro h1{font-size:var(--t-lg);font-weight:600;letter-spacing:-.01em}
+.intro p{font-size:13px;color:#3C4B43;margin-top:6px;max-width:78ch}
+.rack{display:flex;flex-wrap:wrap;gap:var(--s5);justify-content:center;max-width:1900px;margin:0 auto}
+.slot{width:390px}
+.slot > h2{font-size:var(--t-sm);letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:#3C4B43;margin-bottom:4px}
+.slot > p{font-size:var(--t-sm);color:#4A5A51;margin-bottom:var(--s3);min-height:52px}
+.phone{width:390px;height:844px;background:var(--bg);border-radius:34px;overflow:hidden;position:relative;
+  box-shadow:0 0 0 9px #1B241F,0 0 0 11px #37433C,0 22px 44px -18px rgba(10,20,15,.55);
+  display:flex;flex-direction:column}
+.statusbar{height:34px;flex:none;background:var(--dark);color:#fff;display:flex;align-items:center;
+  justify-content:space-between;padding:0 var(--s4);font-size:var(--t-sm);font-weight:600;font-family:var(--num)}
+.screen{flex:1;min-height:0;position:relative;display:flex;flex-direction:column}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+
+/* ---------- app chrome ---------- */
+.topbar{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s3);background:var(--dark);
+  color:#fff;flex:none}
+.topbar .ttl{font-size:15px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconbtn{width:var(--tap);height:var(--tap);border:0;background:none;color:var(--on-dark-mut);border-radius:var(--rf);
+  display:grid;place-items:center;cursor:pointer;flex:none}
+.iconbtn:hover{background:var(--dark-2);color:#fff}
+.iconbtn.ink{color:var(--mut)}
+.iconbtn.ink:hover{background:var(--sunken);color:var(--ink)}
+.bell{position:relative;flex:none}
+.bell .dot{position:absolute;top:6px;right:6px;min-width:16px;height:16px;padding:0 4px;border-radius:var(--rf);
+  background:var(--red);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;border:2px solid var(--dark)}
+.av{width:30px;height:30px;border-radius:50%;background:var(--brand-tint);color:var(--brand);flex:none;
+  display:grid;place-items:center;font-size:var(--t-micro);font-weight:700}
+.tabbar{display:flex;background:var(--surface);border-bottom:1px solid var(--hairline);flex:none}
+.tabbar button{flex:1;min-height:var(--tap);border:0;background:none;font:inherit;font-size:13px;font-weight:500;
+  color:var(--mut);border-bottom:2px solid transparent;cursor:pointer;padding:0 var(--s2)}
+.tabbar button[aria-selected="true"]{color:var(--brand);font-weight:700;border-bottom-color:var(--brand)}
+.pad{padding:var(--s3)}
+
+/* ---------- KPI strip (mobile: 2-up, counts only) ---------- */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2)}
+.kpi{text-align:left;background:var(--surface);border:1px solid var(--hairline);border-left:3px solid var(--kc,var(--hairline));
+  border-radius:var(--r2);box-shadow:var(--e1);padding:10px var(--s3);font:inherit;color:inherit;cursor:pointer;min-height:var(--tap)}
+.kpi[aria-pressed="true"]{border-color:var(--kc,var(--brand));box-shadow:var(--e1),inset 0 0 0 1px var(--kc,var(--brand))}
+.kpi .k-l{display:flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  font-weight:700;color:var(--mut)}
+.kpi .k-v{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:22px;font-weight:600;line-height:1.1;margin:3px 0 1px}
+.kpi .k-s{font-size:var(--t-micro);color:var(--mut)}
+.k-attn,.k-hold{--kc:var(--amber)} .k-transit{--kc:var(--violet)} .k-done{--kc:var(--brand)} .k-open{--kc:var(--blue)}
+
+/* ---------- money strip ---------- */
+.money{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r2);box-shadow:var(--e1);
+  margin-top:var(--s3);overflow:hidden}
+.money h3{font-size:var(--t-sm);font-weight:600;padding:10px var(--s3);border-bottom:1px solid var(--hairline)}
+.money h3 span{font-weight:400;color:var(--mut)}
+.money .row{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s2);
+  padding:8px var(--s3);border-bottom:1px solid var(--hairline)}
+.money .row:last-of-type{border-bottom:0}
+.money .c{font-size:var(--t-micro);letter-spacing:.06em;font-weight:700;color:var(--mut);width:34px;flex:none}
+.money .v{font-family:var(--num);font-variant-numeric:tabular-nums;font-weight:600;margin-left:auto}
+.money .n{font-size:var(--t-micro);color:var(--mut);width:66px;text-align:right;flex:none}
+.note{display:flex;gap:var(--s2);align-items:flex-start;padding:10px var(--s3);background:var(--sunken);
+  font-size:var(--t-micro);color:var(--mut);line-height:1.5}
+.note svg{flex:none;margin-top:1px}
+
+/* ---------- request cards (the mobile table replacement) ---------- */
+.rlist{display:grid;gap:var(--s2);margin-top:var(--s3)}
+.rcard{display:block;background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r2);
+  box-shadow:var(--e1);padding:var(--s3);text-decoration:none;color:inherit;border-left:3px solid var(--kc,var(--hairline))}
+.rcard.crit{--kc:var(--red)} .rcard.high{--kc:var(--amber)}
+.rc-top{display:flex;align-items:center;gap:var(--s2);justify-content:space-between}
+.rc-id{font-family:var(--num);font-size:var(--t-sm);font-weight:700}
+.rc-amt{font-family:var(--num);font-variant-numeric:tabular-nums;font-weight:600;margin-left:auto}
+.rc-desc{font-size:13px;margin:5px 0 2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rc-meta{font-size:var(--t-micro);color:var(--mut)}
+.rc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:var(--s2)}
+
+/* ---------- status pill / payment tag (identical to desktop) ---------- */
+.st{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:var(--rf);font-size:var(--t-micro);
+  font-weight:700;line-height:17px;white-space:nowrap}
+.st svg{width:12px;height:12px;flex:none}
+.st .age{font-weight:400;opacity:.85;font-family:var(--num)}
+.st-submitted{background:var(--blue-tint);color:var(--blue)}
+.st-approved{background:var(--brand-tint);color:var(--brand)}
+.st-ordered{background:var(--amber-tint);color:var(--amber)}
+.st-transit{background:var(--violet-tint);color:var(--violet)}
+.st-received{background:var(--brand);color:#fff}
+.st-cancelled{background:var(--mut);color:#fff}
+.st-rejected{background:var(--red-tint);color:var(--red)}
+.st-hold{background:var(--sunken);color:var(--mut);box-shadow:inset 3px 0 0 var(--amber);padding-left:12px}
+.pay{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:var(--r1);border:1px solid currentColor;
+  background:transparent;font-size:10px;font-weight:700;letter-spacing:.02em;line-height:15px;white-space:nowrap}
+.pay svg{width:9px;height:9px;flex:none}
+.pay-unpaid{color:var(--red)} .pay-paid{color:var(--brand)} .pay-part{color:var(--amber)} .pay-foc{color:var(--mut)}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);min-height:var(--tap);
+  padding:0 var(--s4);border-radius:var(--r1);border:1px solid var(--border);background:var(--surface);color:var(--ink);
+  font:inherit;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn-ghost{border-style:dashed;color:var(--brand);border-color:var(--brand);background:var(--surface)}
+.btn-block{width:100%}
+.btn-sm{min-height:36px;font-size:var(--t-sm);padding:0 10px;font-weight:600}
+.iconbtn.danger:hover{background:var(--red-tint);color:var(--red)}
+
+/* ---------- form: single column, top labels, real <label>s ---------- */
+.sec{background:var(--surface);border:1px solid var(--hairline);border-radius:var(--r2);box-shadow:var(--e1);
+  margin-bottom:var(--s3);overflow:hidden}
+.sec > h3{display:flex;align-items:baseline;gap:var(--s2);font-size:var(--t-sm);letter-spacing:.06em;
+  text-transform:uppercase;font-weight:700;color:var(--mut);padding:10px var(--s3);
+  border-bottom:1px solid var(--hairline);background:var(--sunken)}
+.sec > h3 .cnt{margin-left:auto;font-family:var(--num);letter-spacing:0;text-transform:none;font-weight:600;color:var(--ink)}
+.secbody{padding:var(--s3);display:grid;gap:var(--s3)}
+.field{display:grid;gap:5px}
+.lbl{font-size:var(--t-sm);font-weight:600;color:var(--ink);display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+.req{color:var(--red);font-weight:700}
+.opt{color:var(--mut);font-weight:400;font-size:var(--t-micro)}
+input,select,textarea{font:inherit;font-size:16px;/* 16px stops iOS zoom-on-focus */
+  color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:var(--r1);
+  padding:0 10px;min-height:var(--tap);width:100%}
+textarea{padding:10px;min-height:76px;line-height:1.45;resize:vertical}
+select{appearance:none;padding-right:34px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235E7066' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;background-size:19px}
+input::placeholder{color:var(--mut)}
+/* validation is visible before the browser balloon fires, and the message is
+   attached to the field that caused it — not left in a corner toast (F-45, A-24, S-16) */
+[aria-invalid="true"]{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+input:invalid:not(:placeholder-shown){border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+.err{display:flex;gap:5px;align-items:flex-start;font-size:var(--t-sm);color:var(--red);font-weight:600;line-height:1.4}
+.err svg{flex:none;margin-top:2px}
+.dept{display:inline-flex;align-items:center;gap:6px;font-size:var(--t-micro);color:var(--mut)}
+
+/* the help affordance — a real button, reachable by touch and by keyboard */
+details.hint{display:inline-block;vertical-align:middle}
+details.hint > summary{list-style:none;display:grid;place-items:center;width:20px;height:20px;border-radius:var(--rf);
+  border:1px solid var(--border);color:var(--mut);background:var(--surface);font-size:12px;font-weight:700;
+  cursor:pointer;position:relative;margin-left:2px}
+details.hint > summary::-webkit-details-marker{display:none}
+details.hint > summary::after{content:"";position:absolute;inset:-12px}   /* 44px tap target */
+details.hint[open] > summary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hinttext{grid-column:1/-1;font-size:var(--t-sm);color:var(--mut);line-height:1.5;background:var(--sunken);
+  border-left:3px solid var(--border);border-radius:0 var(--r1) var(--r1) 0;padding:8px 10px;margin-top:5px}
+
+/* composite qty + unit: one value, one control (never split across two fields) */
+.qty{display:flex;border:1px solid var(--border);border-radius:var(--r1);overflow:hidden;background:var(--surface)}
+.qty input{border:0;border-radius:0;flex:1;min-width:0;text-align:right;font-family:var(--num);font-weight:600}
+.qty select{border:0;border-left:1px solid var(--hairline);border-radius:0;width:104px;flex:none;background-color:var(--sunken)}
+.qty:focus-within{outline:2px solid var(--brand);outline-offset:1px}
+.money-in{position:relative}
+.money-in .sym{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mut);font-family:var(--num);
+  font-weight:600;pointer-events:none}
+.money-in input{padding-left:30px;text-align:right;font-family:var(--num);font-weight:600}
+
+/* ---------- item cards: the answer to the 9-column grid ---------- */
+.item{border:1px solid var(--hairline);border-radius:var(--r2);background:var(--surface);overflow:hidden}
+.item + .item{margin-top:var(--s3)}
+.item > header{display:flex;align-items:center;gap:var(--s2);padding:6px 6px 6px var(--s3);
+  background:var(--sunken);border-bottom:1px solid var(--hairline)}
+.item > header .n{font-size:var(--t-micro);letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--mut)}
+.item > header .lt{margin-left:auto;font-family:var(--num);font-variant-numeric:tabular-nums;font-weight:700;font-size:var(--t-base)}
+.item > header .lt small{font-weight:400;color:var(--mut);font-size:10px;display:block;text-align:right;
+  letter-spacing:.06em;text-transform:uppercase;font-family:var(--ui)}
+.item .body{padding:var(--s3);display:grid;gap:var(--s3)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3)}
+details.more{border-top:1px solid var(--hairline)}
+details.more > summary{list-style:none;display:flex;align-items:center;gap:var(--s2);min-height:var(--tap);
+  padding:0 var(--s3);font-size:13px;font-weight:600;color:var(--brand);cursor:pointer}
+details.more > summary::-webkit-details-marker{display:none}
+details.more > summary .cv{transition:transform var(--dur) var(--ease)}
+details.more[open] > summary .cv{transform:rotate(180deg)}
+details.more > summary .hasval{margin-left:auto;font-size:var(--t-micro);color:var(--mut);font-weight:400}
+details.more .body{padding-top:0}
+.itemfoot{display:flex;gap:var(--s2);padding:0 var(--s3) var(--s3)}
+
+/* ---------- sticky submit bar: the running total that used to be mid-page ---------- */
+.dock{flex:none;background:var(--surface);border-top:1px solid var(--border);box-shadow:var(--e2);
+  padding:10px var(--s3);display:flex;align-items:center;gap:var(--s3)}
+.dock .t-l{font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--mut)}
+.dock .t-v{font-family:var(--num);font-variant-numeric:tabular-nums;font-size:19px;font-weight:700;line-height:1.1}
+.dock .btn{flex:1;max-width:190px}
+
+/* ---------- combobox that opens upward when the keyboard is up ---------- */
+.combo{position:relative}
+.clist{position:absolute;left:0;right:0;bottom:calc(100% + 6px);background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);box-shadow:var(--e2);overflow:hidden;z-index:5}
+.clist[data-dir="down"]{bottom:auto;top:calc(100% + 6px)}
+.copt{display:flex;gap:var(--s2);align-items:baseline;padding:11px var(--s3);border-bottom:1px solid var(--hairline);
+  font-size:14px;min-height:var(--tap);cursor:pointer}
+.copt:last-child{border-bottom:0}
+.copt[aria-selected="true"]{background:var(--brand-tint)}
+.copt b{font-weight:600}
+.copt span{margin-left:auto;color:var(--mut);font-size:var(--t-sm)}
+.keyboard{flex:none;height:290px;background:#D3D8DC;border-top:1px solid #A9B2B8;display:grid;
+  grid-template-rows:repeat(5,1fr);gap:7px;padding:8px 5px 22px}
+.krow{display:flex;gap:5px;justify-content:center}
+.key{background:#fff;border-radius:5px;min-width:30px;flex:1;display:grid;place-items:center;font-size:15px;
+  color:#111;box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.key.wide{flex:2.4} .key.space{flex:6} .key.dark{background:#ACB3BA}
+.overlaynote{background:var(--amber-tint);border-top:1px solid var(--hairline);color:var(--amber);
+  font-size:var(--t-micro);font-weight:600;padding:6px var(--s3);text-align:center}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <g id="i-clock" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6V8l2.4 1.6"/></g>
+  <g id="i-check" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.4l3.4 3.4L13 4.8"/></g>
+  <g id="i-checkcircle" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2"/><path d="M5.2 8.2l2 2 3.6-4"/></g>
+  <g id="i-doc" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.2h5l3 3v8.6H4z"/><path d="M9 2.2v3h3M6 8.6h4M6 11h3"/></g>
+  <g id="i-truck" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1.4 4.4h7.4v6.4H1.4zM8.8 6.6h2.6l2.2 2.2v2H8.8z"/><circle cx="4.4" cy="12.2" r="1.4"/><circle cx="11.2" cy="12.2" r="1.4"/></g>
+  <g id="i-pause" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 4v8M10 4v8"/></g>
+  <g id="i-x" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2"/></g>
+  <g id="i-trash" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.2 4.4h9.6M6.4 4.4V3h3.2v1.4M4.6 4.4l.7 8.4h5.4l.7-8.4"/></g>
+  <g id="i-copy" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.6 5.6h7.2v7.2H5.6z"/><path d="M10.4 5.6V3.2H3.2v7.2h2.4"/></g>
+  <g id="i-search" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7.4" cy="7.4" r="4.6"/><path d="M10.8 10.8l3 3"/></g>
+  <g id="i-caret" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5L8 10l3.5-3.5"/></g>
+  <g id="i-back" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.2L5.2 8l4.8 4.8"/></g>
+  <g id="i-bell" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a4 4 0 0 1 8 0c0 3 1.2 4 1.2 4H2.8S4 10 4 7z"/><path d="M6.6 13.4a1.6 1.6 0 0 0 2.8 0"/></g>
+  <g id="i-plus" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3.4v9.2M3.4 8h9.2"/></g>
+  <g id="i-info" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4M8 5.1v.1"/></g>
+  <g id="i-alert" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.2l6 10.6H2z"/><path d="M8 6.4v3.2M8 11.4v.1"/></g>
+  <circle id="i-dot-o" cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
+  <circle id="i-dot-f" cx="8" cy="8" r="6" fill="currentColor"/>
+  <g id="i-dot-h"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 3a5 5 0 0 1 0 10z" fill="currentColor"/></g>
+</defs></svg>
+
+<div class="intro">
+  <h1>Direction A — Unify · mobile, at 390&nbsp;px</h1>
+  <p>Four screens in real device frames. The centre of this deliverable is screens 2–4: raising a purchase request with line items on a phone. The line item stops being a row in a nine-column grid and becomes a card, with exactly one level of disclosure inside it. The desktop table is untouched — this is a different layout of the same DOM at one breakpoint, not a different information architecture.</p>
+</div>
+
+<div class="rack">
+
+<!-- ================================================================
+     1 · DASHBOARD
+     ================================================================ -->
+<section class="slot">
+  <h2>1 · Requests</h2>
+  <p>Counts, then a card per request. The seven-column table becomes a stack; nothing scrolls sideways. Priority is a coloured rail, status and payment are the two shapes.</p>
+  <div class="phone">
+    <div class="statusbar"><span>09:41</span><span>Sat 25 Jul</span></div>
+    <div class="screen">
+      <div class="topbar">
+        <span class="av" aria-hidden="true">AS</span>
+        <span class="ttl">Purchase requests</span>
+        <span class="bell"><button class="iconbtn" type="button" aria-label="Notifications, 2 unread"><svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-bell"/></svg></button><span class="dot" aria-hidden="true">2</span></span>
+      </div>
+      <div class="tabbar" role="tablist">
+        <button role="tab" aria-selected="true">Yours</button>
+        <button role="tab" aria-selected="false">Everyone</button>
+      </div>
+      <div class="scroll">
+        <div class="pad">
+          <div class="kpis">
+            <button class="kpi k-open" type="button" aria-pressed="true">
+              <span class="k-l">Open</span><span class="k-v">5</span>
+              <span class="k-s">not yet received</span>
+            </button>
+            <button class="kpi k-attn" type="button" aria-pressed="false">
+              <span class="k-l"><svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-clock"/></svg> Awaiting</span><span class="k-v">1</span>
+              <span class="k-s">oldest 3 days</span>
+            </button>
+            <button class="kpi k-hold" type="button" aria-pressed="false">
+              <span class="k-l"><svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-pause"/></svg> On hold</span><span class="k-v">1</span>
+              <span class="k-s">held 6 days</span>
+            </button>
+            <button class="kpi k-transit" type="button" aria-pressed="false">
+              <span class="k-l"><svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-truck"/></svg> In transit</span><span class="k-v">1</span>
+              <span class="k-s">ETA 29 Jul</span>
+            </button>
+          </div>
+
+          <div class="money">
+            <h3>Committed value <span>· 5 open</span></h3>
+            <div class="row"><span class="c">INR</span><span class="v">₹3,47,900.00</span><span class="n">3 requests</span></div>
+            <div class="row"><span class="c">EUR</span><span class="v">€4,820.00</span><span class="n">1 request</span></div>
+            <div class="row"><span class="c">USD</span><span class="v">$2,310.00</span><span class="n">1 request</span></div>
+            <p class="note"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-info"/></svg>
+              Three currencies, three readings. No exchange rate exists here, so no total is printed.</p>
+          </div>
+
+          <div class="rlist">
+            <a class="rcard high" href="#">
+              <div class="rc-top"><span class="rc-id">PR-2026-0141</span><span class="rc-amt">₹1,84,500.00</span></div>
+              <p class="rc-desc">Powder-coated aluminium enclosure, IP65, 300×200×120 <span style="color:var(--mut)">+1 more</span></p>
+              <p class="rc-meta">Precision Sheet Metal Works · Production</p>
+              <div class="rc-chips">
+                <span class="st st-submitted"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-clock"/></svg> Submitted <span class="age">3 d</span></span>
+                <span class="pay pay-unpaid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-o"/></svg> Unpaid</span>
+              </div>
+            </a>
+            <a class="rcard crit" href="#">
+              <div class="rc-top"><span class="rc-id">PR-2026-0142</span><span class="rc-amt">€4,820.00</span></div>
+              <p class="rc-desc">SPS30 particulate matter sensor module <span style="color:var(--mut)">+2 more</span></p>
+              <p class="rc-meta">Sensirion AG · R&amp;D · arriving Wed 29 Jul</p>
+              <div class="rc-chips">
+                <span class="st st-transit"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-truck"/></svg> In Transit <span class="age">13 d</span></span>
+                <span class="pay pay-paid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-f"/></svg> Paid</span>
+              </div>
+            </a>
+            <a class="rcard high" href="#">
+              <div class="rc-top"><span class="rc-id">PR-2026-0138</span><span class="rc-amt">$2,310.00</span></div>
+              <p class="rc-desc">LTE modules for Odosense v2</p>
+              <p class="rc-meta">Mouser Electronics · R&amp;D</p>
+              <div class="rc-chips">
+                <span class="st st-hold"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-pause"/></svg> On Hold <span class="age">6 d</span></span>
+                <span class="pay pay-unpaid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-o"/></svg> Unpaid</span>
+              </div>
+              <p class="rc-meta" style="margin-top:5px">held from Approved · no reason recorded</p>
+            </a>
+            <a class="rcard crit" href="#">
+              <div class="rc-top"><span class="rc-id">PR-2026-0136</span><span class="rc-amt">₹95,400.00</span></div>
+              <p class="rc-desc">Solar panels and charge controllers, 30 field units</p>
+              <p class="rc-meta">Robu.in · Device Management</p>
+              <div class="rc-chips">
+                <span class="st st-ordered"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-doc"/></svg> Ordered <span class="age">9 d</span></span>
+                <span class="pay pay-part"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-h"/></svg> Part paid</span>
+              </div>
+            </a>
+            <a class="rcard" href="#">
+              <div class="rc-top"><span class="rc-id">PR-2026-0139</span><span class="rc-amt">£1,240.00</span></div>
+              <p class="rc-desc">NO2-B43F electrochemical sensor <span style="color:var(--mut)">+1 more</span></p>
+              <p class="rc-meta">Alphasense Ltd · Support · received 18 Jul</p>
+              <div class="rc-chips">
+                <span class="st st-received"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-checkcircle"/></svg> Received</span>
+                <span class="pay pay-paid"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#i-dot-f"/></svg> Paid</span>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="dock">
+        <a class="btn btn-primary btn-block" href="#" style="max-width:none">
+          <svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-plus"/></svg> New request</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     2 · NEW REQUEST — header block, hint open
+     ================================================================ -->
+<section class="slot">
+  <h2>2 · New request · details</h2>
+  <p>Every one of the 14 field hints becomes a real button that opens inline text. That copy is the best writing in the product and today it is hover-only — invisible on the requester's primary device.</p>
+  <div class="phone">
+    <div class="statusbar"><span>09:43</span><span>Sat 25 Jul</span></div>
+    <div class="screen">
+      <div class="topbar">
+        <button class="iconbtn" type="button" aria-label="Back to requests"><svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-back"/></svg></button>
+        <span class="ttl">New request</span>
+        <button class="btn btn-sm" type="button" style="background:var(--dark-2);color:#fff;border-color:#3A4C43">Save draft</button>
+      </div>
+      <div class="scroll">
+        <div class="pad">
+          <p class="dept" style="margin-bottom:var(--s3)">
+            <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-info"/></svg>
+            Raising for <b style="color:var(--ink)">R&amp;D</b> — this scopes the project, vendor and item-type lists below.
+          </p>
+
+          <section class="sec">
+            <h3>Request</h3>
+            <div class="secbody">
+              <div class="field">
+                <label class="lbl" for="f-proj">Project <span class="req" aria-hidden="true">*</span><span class="vh">required</span>
+                  <details class="hint"><summary aria-label="What is Project?">?</summary></details>
+                </label>
+                <select id="f-proj"><option selected>Polludrone Gen-5</option><option>Odosense v2</option><option>Gen-5 bring-up rig</option></select>
+                <p class="hinttext">Which running project this purchase belongs to. Only your department’s projects are listed — ask an admin to add one if yours is missing.</p>
+              </div>
+
+              <div class="field">
+                <label class="lbl" for="f-purp">Purpose <span class="opt">(optional)</span></label>
+                <input id="f-purp" value="PM sensor evaluation batch for Gen-5 board bring-up">
+              </div>
+
+              <div class="field">
+                <label class="lbl" for="f-ven">Vendor <span class="opt">(optional)</span></label>
+                <input id="f-ven" value="Sensirion AG" autocomplete="off" role="combobox" aria-expanded="false">
+              </div>
+
+              <div class="two">
+                <div class="field">
+                  <label class="lbl" for="f-cur">Currency</label>
+                  <input id="f-cur" class="num" value="EUR — Euro" autocomplete="off" role="combobox" aria-expanded="false">
+                </div>
+                <div class="field">
+                  <label class="lbl" for="f-pri">Priority
+                    <details class="hint"><summary aria-label="What is Priority?">?</summary></details>
+                  </label>
+                  <select id="f-pri"><option selected>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="lbl" for="f-exp">Expected delivery <span class="opt">(optional)</span></label>
+                <input id="f-exp" type="date" value="2026-07-29">
+              </div>
+
+              <div class="field">
+                <label class="lbl" for="f-note">Notes for the approver <span class="opt">(optional)</span></label>
+                <textarea id="f-note">Sensirion quoted a 6-week lead on SPS30 after this batch.</textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="sec">
+            <h3>Items <span class="cnt">3</span></h3>
+            <div style="padding:var(--s3);font-size:var(--t-sm);color:var(--mut)">
+              Three items entered. Scroll on to review or add another.
+            </div>
+          </section>
+        </div>
+      </div>
+      <div class="dock">
+        <div>
+          <div class="t-l">3 items</div>
+          <div class="t-v">€4,820.00</div>
+        </div>
+        <button class="btn btn-primary" type="button">Submit request</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     3 · NEW REQUEST — the line items
+     ================================================================ -->
+<section class="slot">
+  <h2>3 · New request · line items</h2>
+  <p>The hardest screen in the tool. One card per item, four fields on the face, the rest behind a single reveal. Line total sits in each card header, the running total is docked, and item&nbsp;3 is shown mid-error so validation can be judged too.</p>
+  <div class="phone">
+    <div class="statusbar"><span>09:46</span><span>Sat 25 Jul</span></div>
+    <div class="screen">
+      <div class="topbar">
+        <button class="iconbtn" type="button" aria-label="Back to requests"><svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-back"/></svg></button>
+        <span class="ttl">New request</span>
+        <button class="btn btn-sm" type="button" style="background:var(--dark-2);color:#fff;border-color:#3A4C43">Save draft</button>
+      </div>
+      <div class="scroll">
+        <div class="pad">
+          <section class="sec">
+            <h3>Items <span class="cnt">3</span></h3>
+            <div style="padding:var(--s3)">
+
+              <!-- item 1: face only -->
+              <article class="item">
+                <header>
+                  <span class="n">Item 1</span>
+                  <span class="lt">€3,680.00<small>line total</small></span>
+                  <button class="iconbtn ink danger" type="button" aria-label="Remove item 1"><svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-trash"/></svg></button>
+                </header>
+                <div class="body">
+                  <div class="field">
+                    <label class="lbl" for="i1d">Description <span class="req" aria-hidden="true">*</span><span class="vh">required</span>
+                      <details class="hint"><summary aria-label="What is Description?">?</summary></details>
+                    </label>
+                    <input id="i1d" value="SPS30 particulate matter sensor module">
+                  </div>
+                  <div class="field">
+                    <label class="lbl" for="i1t">Item type <span class="req" aria-hidden="true">*</span><span class="vh">required</span>
+                      <details class="hint"><summary aria-label="What is Item type?">?</summary></details>
+                    </label>
+                    <select id="i1t"><option selected>Inventory</option><option>Asset</option><option>Local Purchase</option><option>Subscription</option><option>Certification</option></select>
+                  </div>
+                  <div class="two">
+                    <div class="field">
+                      <label class="lbl" for="i1q">Quantity <span class="req" aria-hidden="true">*</span></label>
+                      <div class="qty">
+                        <input id="i1q" inputmode="decimal" value="40" aria-label="Quantity">
+                        <select aria-label="Unit"><option selected>pcs</option><option>L</option><option>kg</option><option>m</option><option>set</option><option>box</option><option>license</option></select>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label class="lbl" for="i1p">Unit price</label>
+                      <div class="money-in"><span class="sym" aria-hidden="true">€</span>
+                        <input id="i1p" inputmode="decimal" value="92.00"></div>
+                    </div>
+                  </div>
+                </div>
+                <details class="more">
+                  <summary>More details <span class="hasval">2 of 3 filled</span>
+                    <svg class="cv" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg></summary>
+                  <div class="body">
+                    <div class="field"><label class="lbl" for="i1l">Purchase link</label>
+                      <input id="i1l" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" value="sensirion.com/sps30"></div>
+                    <div class="field"><label class="lbl" for="i1s">Datasheet</label>
+                      <input id="i1s" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" value="sensirion.com/…/SPS30.pdf"></div>
+                  </div>
+                </details>
+                <div class="itemfoot">
+                  <button class="btn btn-sm" type="button" style="flex:1"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-copy"/></svg> Duplicate</button>
+                </div>
+              </article>
+
+              <!-- item 2: reveal open, to show both tiers at once -->
+              <article class="item">
+                <header>
+                  <span class="n">Item 2</span>
+                  <span class="lt">€870.00<small>line total</small></span>
+                  <button class="iconbtn ink danger" type="button" aria-label="Remove item 2"><svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-trash"/></svg></button>
+                </header>
+                <div class="body">
+                  <div class="field">
+                    <label class="lbl" for="i2d">Description <span class="req" aria-hidden="true">*</span></label>
+                    <input id="i2d" value="SHT45 humidity and temperature sensor">
+                  </div>
+                  <div class="field">
+                    <label class="lbl" for="i2t">Item type <span class="req" aria-hidden="true">*</span></label>
+                    <select id="i2t"><option selected>Inventory</option><option>Asset</option><option>Local Purchase</option><option>Subscription</option><option>Certification</option></select>
+                  </div>
+                  <div class="two">
+                    <div class="field">
+                      <label class="lbl" for="i2q">Quantity <span class="req" aria-hidden="true">*</span></label>
+                      <div class="qty">
+                        <input id="i2q" inputmode="decimal" value="60" aria-label="Quantity">
+                        <select aria-label="Unit"><option selected>pcs</option><option>set</option><option>box</option></select>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label class="lbl" for="i2p">Unit price</label>
+                      <div class="money-in"><span class="sym" aria-hidden="true">€</span>
+                        <input id="i2p" inputmode="decimal" value="14.50"></div>
+                    </div>
+                  </div>
+                </div>
+                <details class="more" open>
+                  <summary>More details <span class="hasval">1 of 3 filled</span>
+                    <svg class="cv" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg></summary>
+                  <div class="body">
+                    <div class="field"><label class="lbl" for="i2l">Purchase link</label>
+                      <input id="i2l" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste the product page URL"></div>
+                    <div class="field"><label class="lbl" for="i2s">Datasheet</label>
+                      <input id="i2s" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" value="sensirion.com/…/SHT4x.pdf"></div>
+                  </div>
+                </details>
+                <div class="itemfoot">
+                  <button class="btn btn-sm" type="button" style="flex:1"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-copy"/></svg> Duplicate</button>
+                </div>
+              </article>
+
+              <!-- item 3: collapsed summary state is still verifiable -->
+              <article class="item">
+                <header>
+                  <span class="n">Item 3</span>
+                  <span class="lt">€270.00<small>line total</small></span>
+                  <button class="iconbtn ink danger" type="button" aria-label="Remove item 3"><svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-trash"/></svg></button>
+                </header>
+                <div class="body">
+                  <div class="field">
+                    <label class="lbl" for="i3d">Description <span class="req" aria-hidden="true">*</span></label>
+                    <input id="i3d" value="Sensor evaluation kit, SEK-SVM41">
+                  </div>
+                  <div class="field">
+                    <label class="lbl" for="i3t">Item type <span class="req" aria-hidden="true">*</span>
+                      <details class="hint"><summary aria-label="What is Item type?">?</summary></details>
+                    </label>
+                    <select id="i3t" aria-invalid="true" aria-describedby="i3t-e" required>
+                      <option value="" selected>Choose a type</option>
+                      <option>Inventory</option><option>Asset</option><option>Certification</option></select>
+                    <p class="err" id="i3t-e"><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-alert"/></svg>
+                      Pick an item type for R&amp;D — this drives departmental reporting.</p>
+                  </div>
+                  <div class="two">
+                    <div class="field">
+                      <label class="lbl" for="i3q">Quantity <span class="req" aria-hidden="true">*</span></label>
+                      <div class="qty">
+                        <input id="i3q" inputmode="decimal" value="1" aria-label="Quantity">
+                        <select aria-label="Unit"><option>pcs</option><option selected>set</option></select>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label class="lbl" for="i3p">Unit price</label>
+                      <div class="money-in"><span class="sym" aria-hidden="true">€</span>
+                        <input id="i3p" inputmode="decimal" value="270.00"></div>
+                    </div>
+                  </div>
+                </div>
+                <details class="more">
+                  <summary>More details <span class="hasval">nothing added</span>
+                    <svg class="cv" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-caret"/></svg></summary>
+                  <div class="body">
+                    <div class="field"><label class="lbl" for="i3l">Purchase link</label><input id="i3l" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste the product page URL"></div>
+                    <div class="field"><label class="lbl" for="i3s">Datasheet</label><input id="i3s" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste the datasheet URL"></div>
+                  </div>
+                </details>
+                <div class="itemfoot">
+                  <button class="btn btn-sm" type="button" style="flex:1"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-copy"/></svg> Duplicate</button>
+                </div>
+              </article>
+
+              <button class="btn btn-ghost btn-block" type="button" style="margin-top:var(--s3)">
+                <svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-plus"/></svg> Add item
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+      <div class="dock">
+        <div>
+          <div class="t-l">3 items</div>
+          <div class="t-v">€4,820.00</div>
+        </div>
+        <button class="btn btn-primary" type="button">Submit request</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     4 · KEYBOARD RAISED — combobox flips up
+     ================================================================ -->
+<section class="slot">
+  <h2>4 · Keyboard up, list flipped</h2>
+  <p>The keyboard takes roughly half the screen. Today the vendor and currency lists are absolutely positioned downward with a 230&nbsp;px cap, so a field in the lower half opens its options behind the keys. Here the list flips above the field and each option is a 44&nbsp;px target.</p>
+  <div class="phone">
+    <div class="statusbar"><span>09:44</span><span>Sat 25 Jul</span></div>
+    <div class="screen">
+      <div class="topbar">
+        <button class="iconbtn" type="button" aria-label="Back to requests"><svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-back"/></svg></button>
+        <span class="ttl">New request</span>
+        <button class="btn btn-sm" type="button" style="background:var(--dark-2);color:#fff;border-color:#3A4C43">Save draft</button>
+      </div>
+      <div class="scroll">
+        <div class="pad">
+          <section class="sec">
+            <h3>Request</h3>
+            <div class="secbody">
+              <div class="field">
+                <label class="lbl" for="k-proj">Project <span class="req" aria-hidden="true">*</span></label>
+                <select id="k-proj"><option selected>Polludrone Gen-5</option></select>
+              </div>
+              <div class="field">
+                <label class="lbl" for="k-purp">Purpose <span class="opt">(optional)</span></label>
+                <input id="k-purp" value="PM sensor evaluation batch for Gen-5 board bring-up">
+              </div>
+              <div class="field combo">
+                <label class="lbl" for="k-ven">Vendor <span class="opt">(optional)</span></label>
+                <div class="clist" role="listbox" aria-label="Vendors mapped to R&amp;D">
+                  <div class="copt" role="option" aria-selected="true"><b>Sensirion AG</b><span>Switzerland</span></div>
+                  <div class="copt" role="option" aria-selected="false"><b>Alphasense Ltd</b><span>UK</span></div>
+                  <div class="copt" role="option" aria-selected="false"><b>Mouser Electronics</b><span>USA</span></div>
+                  <div class="copt" role="option" aria-selected="false"><b>DigiKey</b><span>USA</span></div>
+                </div>
+                <input id="k-ven" value="Sens" role="combobox" aria-expanded="true" autocomplete="off"
+                       style="outline:2px solid var(--brand);outline-offset:1px">
+              </div>
+              <div class="two">
+                <div class="field"><label class="lbl" for="k-cur">Currency</label><input id="k-cur" class="num" value="EUR — Euro"></div>
+                <div class="field"><label class="lbl" for="k-pri">Priority</label>
+                  <select id="k-pri"><option selected>Critical</option></select></div>
+              </div>
+              <div class="field"><label class="lbl" for="k-exp">Expected delivery</label><input id="k-exp" type="date" value="2026-07-29"></div>
+            </div>
+          </section>
+        </div>
+      </div>
+      <div class="dock" style="padding:8px var(--s3)">
+        <div><div class="t-l">3 items</div><div class="t-v" style="font-size:17px">€4,820.00</div></div>
+        <button class="btn btn-primary btn-sm" type="button" style="min-height:38px">Submit request</button>
+      </div>
+      <div class="overlaynote">Keyboard raised — the total and Submit stay docked above it</div>
+      <div class="keyboard" aria-hidden="true">
+        <div class="krow"><span class="key">q</span><span class="key">w</span><span class="key">e</span><span class="key">r</span><span class="key">t</span><span class="key">y</span><span class="key">u</span><span class="key">i</span><span class="key">o</span><span class="key">p</span></div>
+        <div class="krow" style="padding:0 14px"><span class="key">a</span><span class="key">s</span><span class="key">d</span><span class="key">f</span><span class="key">g</span><span class="key">h</span><span class="key">j</span><span class="key">k</span><span class="key">l</span></div>
+        <div class="krow"><span class="key dark wide">⇧</span><span class="key">z</span><span class="key">x</span><span class="key">c</span><span class="key">v</span><span class="key">b</span><span class="key">n</span><span class="key">m</span><span class="key dark wide">⌫</span></div>
+        <div class="krow"><span class="key dark wide">123</span><span class="key space">space</span><span class="key dark wide">return</span></div>
+        <div class="krow" style="padding:0 90px"><span class="key" style="background:none;box-shadow:none"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /rack -->
+
+<div class="intro" style="margin:var(--s6) auto 0;max-width:1180px">
+  <h1 style="font-size:var(--t-md)">What is load-bearing here</h1>
+  <p><b>Card, not reflow.</b> The nine-column grid becomes one card per item at the 700&nbsp;px breakpoint. Four fields on the face — description, item type, quantity + unit, unit price — and exactly one reveal holding the three optional ones. That is two disclosure levels total, which is the ceiling.</p>
+  <p><b>Quantity and unit are one control.</b> Splitting a single value across two mobile fields is a documented failure mode; the composite keeps them on one line and shows the unit as a picker rather than a mystery dropdown reading “pcs”.</p>
+  <p><b>The two selects finally have names.</b> Today the item-type select renders blank, is <code>required</code>, and has no label, no placeholder and no touch-reachable hint. Here both selects carry a visible label, a required marker, and a hint button that opens inline.</p>
+  <p><b>The total is docked.</b> It used to be a muted span next to “+ Add item”, mid-document. Docking it also drags Submit back on screen, which was previously in a non-sticky header above three cards of form.</p>
+  <p><b>Errors point at the field.</b> Item 3 is shown mid-error. Today validation is native <code>required</code> with no <code>:invalid</code> rule anywhere in the stylesheet, so an invalid field looks identical to a valid one until the browser balloon fires — and the server’s own message (“select an item type for R&amp;D”) arrives in a corner toast that auto-dismisses in six seconds, leaving the user to map prose back to a row. Here the border, the message and the control are the same object.</p>
+  <p><b>Delete is quiet, duplicate is not.</b> The remove control was a solid red button occupying half a row per item — five items meant the five loudest things on screen were destructive. Real Oizom items differ by one field, so duplicate earns the wider button.</p>
+</div>
+
+</body>
+</html>

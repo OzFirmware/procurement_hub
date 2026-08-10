@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction C — The Docket · Desktop</title>
+<style>
+/* ============================================================
+   DIRECTION C — "THE DOCKET"
+   Oizom Procurement Hub · desktop mockup · 2026-07-25
+   Single file. No CDN, no webfonts, no network. Opens via file://
+   ------------------------------------------------------------
+   ONE token set. Every value below is used; nothing is declared twice.
+   Contrast ratios in comments are computed, not estimated.
+   ============================================================ */
+:root{
+  /* --- surfaces --------------------------------------------------- */
+  --page:#F1F4F2;         /* app background                           */
+  --panel:#FFFFFF;        /* cards, table body                        */
+  --sunken:#F7F9F8;       /* inputs, table head, inset strips         */
+  --rail:#0E1A16;         /* navigation rail                          */
+  --rail-ink:#C6D6CE;     /* 11.81:1 on --rail                        */
+
+  /* --- ink --------------------------------------------------------- */
+  --ink:#101820;          /* 16.16:1 on --page                        */
+  --muted:#54635C;        /* 5.72:1 on --page, 6.33:1 on --panel      */
+
+  /* --- edges: exactly two ------------------------------------------ */
+  --edge:#DDE4E0;         /* decorative hairline (table rules only)   */
+  --edge-strong:#7E8B84;  /* every interactive boundary. 3.55:1 :white
+                             — clears WCAG 1.4.11, which the current
+                             app fails at 1.62:1 (audit A-02)         */
+
+  /* --- the four semantic axes. colour is NEVER the only signal ----- */
+  --go:#0E7B5B;      --go-soft:#E3F1EA;   --go-ink:#0A6449;  /* 6.15 */
+  --wait:#8A4E00;    --wait-soft:#FBEEDC;                    /* 5.79 */
+  --stop:#A32218;    --stop-soft:#FBE7E4;                    /* 6.31 */
+  --hold:#3F5158;    --hold-soft:#E8ECEE;                    /* 6.98 */
+  --new:#1F4E96;     --new-soft:#E4EBF7;                     /* 6.77 */
+
+  /* --- type: system stacks only. no webfont may be loaded --------- */
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --data:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+
+  /* --- scale: 4px base. six sizes, three weights ------------------ */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+  --r-ctl:6px;  --r-panel:10px;              /* exactly two radii     */
+  --e-rest:0 1px 0 rgba(16,24,32,.05);
+  --e-raised:0 6px 16px -6px rgba(16,24,32,.22);   /* exactly two     */
+  --rail-w:240px; --head-h:56px; --row-h:40px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--page);color:var(--ink);font:400 14px/1.45 var(--ui)}
+
+/* mono is the character of this system: every identifier, quantity,
+   amount, date and micro-label is set in it. prose is not. */
+.mono{font-family:var(--data);font-variant-numeric:tabular-nums}
+.lbl{font:600 11px/1.2 var(--data);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.num{font-family:var(--data);font-variant-numeric:tabular-nums;font-weight:600}
+
+a{color:var(--go-ink)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--go);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- mockup framing (not part of the product) -------------- */
+.framenote{background:var(--ink);color:#fff;padding:6px var(--s5);font:600 11px/1.4 var(--data);
+  letter-spacing:.06em;text-transform:uppercase;display:flex;gap:var(--s5);flex-wrap:wrap}
+.framenote span{color:#9FB3AA;text-transform:none;letter-spacing:0;font-weight:400}
+
+/* ================= SHELL ========================================== */
+.shell{display:grid;grid-template-columns:var(--rail-w) 1fr;min-height:calc(100vh - 26px)}
+
+/* ---------- navigation rail --------------------------------------
+   THE IA CHANGE, MADE VISIBLE.
+   Two destinations, not six views. One persistent action.
+   "Vendors" and "Admin" collapse into Registry — both are reference
+   data, and neither is a place a requester has a job to do.        */
+.rail{background:var(--rail);color:var(--rail-ink);padding:var(--s4) var(--s3);display:flex;flex-direction:column;gap:var(--s5)}
+.brand{display:flex;align-items:center;gap:var(--s2);padding:0 var(--s2)}
+.brand-mark{width:22px;height:22px;border-radius:5px;background:var(--go);display:grid;place-items:center;
+  font:700 11px var(--data);color:#fff;flex:none}
+.brand b{font:700 14px/1 var(--ui);color:#fff;letter-spacing:-.01em}
+.brand i{display:block;font:400 10px/1.3 var(--data);color:#7E958A;font-style:normal;letter-spacing:.06em;text-transform:uppercase}
+
+.raise{display:flex;align-items:center;justify-content:center;gap:var(--s2);width:100%;min-height:44px;
+  background:var(--go);color:#fff;border:1px solid var(--go);border-radius:var(--r-ctl);
+  font:600 13px var(--ui);cursor:pointer;text-decoration:none}
+.raise:hover{background:#0B6A4E}
+
+.navgrp{display:flex;flex-direction:column;gap:2px}
+.navgrp .lbl{padding:0 var(--s2) var(--s2);color:#7E958A}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);min-height:38px;
+  padding:0 var(--s2);border-radius:var(--r-ctl);color:var(--rail-ink);text-decoration:none;font-size:13px;
+  background:none;border:0;width:100%;text-align:left;cursor:pointer}
+.nav:hover{background:#182B23;color:#fff}
+.nav[aria-current="page"]{background:#1D3329;color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--go)}
+.nav .cnt{font:600 11px var(--data);color:#8FA79B}
+.nav[aria-current="page"] .cnt{color:#CFE3D9}
+
+.whoami{margin-top:auto;border-top:1px solid #1D3329;padding-top:var(--s3)}
+.whoami .lbl{color:#7E958A}
+.whoami b{display:block;font:600 13px var(--ui);color:#fff;margin-top:2px}
+.whoami .sw{margin-top:var(--s2);display:flex;gap:var(--s1)}
+.whoami .sw button{flex:1;min-height:30px;font:600 10px var(--data);letter-spacing:.05em;text-transform:uppercase;
+  background:#182B23;color:#9FB3AA;border:1px solid #24382E;border-radius:var(--r-ctl);cursor:pointer}
+.whoami .sw button[aria-pressed="true"]{background:var(--go);border-color:var(--go);color:#fff}
+
+/* ---------- main -------------------------------------------------- */
+.main{padding:var(--s5) var(--s6) var(--s7);max-width:1180px}
+
+/* The commitment line replaces the 32px title + static paragraph that
+   opens every current view (audit H-17). It says what today is. */
+.commit{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap;margin-bottom:var(--s2)}
+.commit h1{font:600 20px/1.2 var(--ui);letter-spacing:-.01em}
+.commit .date{font:400 12px var(--data);color:var(--muted)}
+.rankline{font:400 12px/1.5 var(--ui);color:var(--muted);margin-bottom:var(--s5);max-width:70ch}
+.rankline b{font-family:var(--data);font-weight:600;color:var(--ink)}
+
+/* ---------- band -------------------------------------------------- */
+.band{margin-bottom:var(--s5)}
+.band-h{display:flex;align-items:center;gap:var(--s3);padding-bottom:var(--s2);margin-bottom:var(--s3);
+  border-bottom:1px solid var(--edge)}
+.band-h h2{font:600 13px var(--ui)}
+.band-h .n{font:700 11px var(--data);min-width:20px;height:20px;padding:0 6px;border-radius:var(--r-ctl);
+  display:grid;place-items:center;background:var(--hold-soft);color:var(--hold)}
+.band-h .why{font:400 12px var(--ui);color:var(--muted);margin-left:auto;text-align:right}
+.band.act .band-h .n{background:var(--wait-soft);color:var(--wait)}
+.band.stuck .band-h .n{background:var(--stop-soft);color:var(--stop)}
+
+/* ---------- docket card -------------------------------------------
+   The unit of the queue. A spine on the left carries the axis that
+   makes this row urgent — so urgency is positional, not just tinted. */
+.dk{display:block;position:relative;background:var(--panel);border:1px solid var(--edge);
+  border-left:4px solid var(--edge-strong);border-radius:var(--r-panel);box-shadow:var(--e-rest);
+  padding:var(--s4) var(--s4) var(--s4) var(--s5);margin-bottom:var(--s3);text-decoration:none;color:inherit}
+.dk:hover{border-color:var(--edge-strong);box-shadow:var(--e-raised)}
+.dk.sp-wait{border-left-color:var(--wait)}
+.dk.sp-stop{border-left-color:var(--stop)}
+.dk.sp-hold{border-left-color:var(--hold)}
+.dk.sp-go{border-left-color:var(--go)}
+.dk.sp-new{border-left-color:var(--new)}
+
+.dk-top{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
+.dk-id{font:700 14px var(--data);letter-spacing:-.01em}
+.dk-ttl{font:600 15px/1.35 var(--ui);flex:1;min-width:220px}
+.dk-amt{font:700 16px var(--data);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dk-meta{display:flex;gap:var(--s3);flex-wrap:wrap;margin-top:var(--s2);font:400 12px var(--ui);color:var(--muted)}
+.dk-meta b{font-weight:600;color:var(--ink)}
+.dk-note{margin-top:var(--s3);padding:var(--s2) var(--s3);border-radius:var(--r-ctl);
+  font:400 12.5px/1.5 var(--ui);border-left:3px solid}
+.dk-note.q{background:var(--stop-soft);border-color:var(--stop);color:#5E1A14}
+.dk-note.g{background:var(--hold-soft);border-color:var(--hold);color:#26343A}
+.dk-note.w{background:var(--wait-soft);border-color:var(--wait);color:#4A2A00}
+
+/* ---------- THE STAMP BLOCK — signature element -------------------
+   Three cells, fixed order, ALWAYS all three present, even when a cell
+   has nothing to say. Status is not one value at Oizom; it is a stage,
+   a liveness, and a payment state. The current chip flattens all three
+   into one word and loses two of them.                              */
+.stamp{display:inline-flex;border:1px solid var(--edge-strong);border-radius:var(--r-ctl);overflow:hidden;
+  background:var(--panel);margin-top:var(--s3)}
+.stamp>div{display:flex;align-items:center;gap:6px;padding:5px 10px;border-right:1px solid var(--edge-strong);
+  font:600 11.5px var(--data);letter-spacing:.01em;white-space:nowrap}
+.stamp>div:last-child{border-right:0}
+.stamp .k{font:600 9px var(--data);letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.stamp svg{width:11px;height:11px;flex:none}
+.st-go{background:var(--go-soft);color:var(--go-ink)}
+.st-wait{background:var(--wait-soft);color:var(--wait)}
+.st-stop{background:var(--stop-soft);color:var(--stop)}
+.st-hold{background:var(--hold-soft);color:var(--hold)}
+.st-new{background:var(--new-soft);color:var(--new)}
+.st-off{background:var(--sunken);color:var(--muted)}
+/* a stage we genuinely cannot know is drawn as unknown, never guessed */
+.st-unk{background:repeating-linear-gradient(135deg,var(--sunken),var(--sunken) 4px,#EBEFED 4px,#EBEFED 8px);
+  color:var(--muted)}
+.age{font:600 11px var(--data);color:var(--muted)}
+.age.hot{color:var(--stop)}
+
+/* ---------- decision strip ---------------------------------------- */
+.acts{display:flex;gap:var(--s2);margin-top:var(--s4);padding-top:var(--s3);border-top:1px solid var(--edge);flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 var(--s4);
+  border:1px solid var(--edge-strong);background:var(--panel);border-radius:var(--r-ctl);
+  font:600 13px var(--ui);cursor:pointer;text-decoration:none;color:var(--ink)}
+.btn:hover{background:var(--sunken)}
+.btn.pri{background:var(--go);border-color:var(--go);color:#fff}
+.btn.pri:hover{background:#0B6A4E}
+.btn.warn{border-color:var(--wait);color:var(--wait)}
+.btn.sm{min-height:34px;padding:0 var(--s3);font-size:12px}
+.btn .k{font:400 11px var(--data);opacity:.75}
+
+/* ---------- money strip: the mixed-currency answer ----------------
+   Four currencies are four numbers. There is no stored FX rate in the
+   sheet, so any single "total spend" figure would be invented.      */
+.money{background:var(--panel);border:1px solid var(--edge);border-radius:var(--r-panel);
+  box-shadow:var(--e-rest);margin-bottom:var(--s5);overflow:hidden}
+.money-h{display:flex;align-items:baseline;gap:var(--s3);padding:var(--s3) var(--s4);background:var(--sunken);
+  border-bottom:1px solid var(--edge)}
+.money-h .note{margin-left:auto;font:400 11.5px var(--ui);color:var(--muted)}
+.money-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.money-c{padding:var(--s3) var(--s4);border-right:1px solid var(--edge)}
+.money-c:last-child{border-right:0}
+.money-c .v{font:700 18px var(--data);font-variant-numeric:tabular-nums;display:block;margin-top:2px}
+.money-c .s{font:400 11.5px var(--data);color:var(--muted)}
+.money-c.unpaid .v{color:var(--stop)}
+
+/* ---------- ledger table ------------------------------------------ */
+.toolbar{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center;margin-bottom:var(--s3)}
+.fld{display:flex;flex-direction:column;gap:var(--s1)}
+.ctl{min-height:38px;border:1px solid var(--edge-strong);background:var(--panel);border-radius:var(--r-ctl);
+  padding:0 var(--s3);font:400 13px var(--ui)}
+.ctl.search{min-width:260px;background:var(--panel) }
+.toolbar .grow{margin-left:auto}
+.tblwrap{background:var(--panel);border:1px solid var(--edge);border-radius:var(--r-panel);
+  box-shadow:var(--e-rest);overflow-x:auto}     /* the wrapper the dashboard never had (audit F-12) */
+table{width:100%;border-collapse:collapse;min-width:940px}
+caption{text-align:left;padding:var(--s3) var(--s4);font:400 12px var(--ui);color:var(--muted);
+  border-bottom:1px solid var(--edge)}
+th{position:sticky;top:0;background:var(--sunken);text-align:left;padding:var(--s2) var(--s3);
+  font:600 11px var(--data);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  border-bottom:1px solid var(--edge-strong);white-space:nowrap}
+th button{background:none;border:0;font:inherit;color:inherit;cursor:pointer;letter-spacing:inherit;
+  text-transform:inherit;display:inline-flex;gap:4px;align-items:center;padding:2px}
+td{padding:var(--s2) var(--s3);border-bottom:1px solid var(--edge);font-size:13px;height:var(--row-h);vertical-align:middle}
+tbody tr:hover{background:var(--sunken)}
+td.n{text-align:right;font-family:var(--data);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.id a{font:600 12.5px var(--data);color:var(--ink);text-decoration:none;border-bottom:1px solid var(--edge-strong)}
+td.id a:hover{color:var(--go-ink)}
+td .sub{display:block;font:400 11px var(--data);color:var(--muted)}
+.pri{display:inline-flex;align-items:center;gap:5px;font:600 11px var(--data);letter-spacing:.04em}
+.pri svg{width:9px;height:9px}
+.pri.p1{color:var(--stop)} .pri.p2{color:var(--wait)} .pri.p3{color:var(--muted)} .pri.p4{color:var(--muted)}
+.mini{display:inline-flex;border:1px solid var(--edge-strong);border-radius:4px;overflow:hidden}
+.mini>span{padding:2px 6px;font:600 10.5px var(--data);border-right:1px solid var(--edge-strong);
+  display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.mini>span:last-child{border-right:0}
+.mini svg{width:9px;height:9px;flex:none}
+
+.legend{margin-top:var(--s3);font:400 12px/1.6 var(--ui);color:var(--muted);max-width:80ch}
+.legend code{font-family:var(--data);font-size:11.5px;background:var(--sunken);border:1px solid var(--edge);
+  border-radius:4px;padding:1px 5px}
+
+.view[hidden]{display:none}
+.sronly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div class="framenote">
+  Direction C · The Docket · desktop mockup
+  <span>Nav model: 2 destinations + 1 always-present action (3 for admins). Not a build — no data is live.</span>
+</div>
+
+<div class="shell">
+
+  <!-- ============ NAV RAIL ============ -->
+  <nav class="rail" aria-label="Main">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">O</span>
+      <span><b>Procurement</b><i>Oizom</i></span>
+    </div>
+
+    <!-- F-01: raising a PR was reachable only from the dashboard.
+         Here it is the first control on every screen. -->
+    <a class="raise" href="#new">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+      Raise a request
+    </a>
+
+    <div class="navgrp">
+      <p class="lbl" id="navlbl">Go to</p>
+      <!-- 5 = open requests (not Received / Rejected / Cancelled), matching the
+           1 + 2 + 2 cards in the three live bands. Settled is not "in the queue". -->
+      <button class="nav" id="tabQueue" aria-current="page" aria-controls="viewQueue">Your queue <span class="cnt">5</span></button>
+      <button class="nav" id="tabLedger" aria-controls="viewLedger">All requests <span class="cnt">8</span></button>
+      <a class="nav" href="#registry">Registry <span class="cnt">10</span></a>
+    </div>
+
+    <div class="whoami">
+      <p class="lbl">Signed in</p>
+      <b>Meera Patel</b>
+      <p class="mono" style="font-size:11px;color:#7E958A;margin-top:2px">meera@oizom.com · approver</p>
+      <!-- demo control: the queue is role-shaped, so the mockup lets you see both shapes -->
+      <div class="sw" role="group" aria-label="Preview queue as (mockup only)">
+        <button id="asApprover" aria-pressed="true">Approver</button>
+        <button id="asRequester" aria-pressed="false">Requester</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+  <!-- ---------- VIEW 1 · THE QUEUE (primary) ---------- -->
+  <section class="view" id="viewQueue" aria-labelledby="qh">
+    <div class="commit">
+      <h1 id="qh">One decision is waiting on you.</h1>
+      <span class="date">Saturday 25 July 2026</span>
+    </div>
+    <p class="rankline" id="rankApprover">
+      Ranked by <b>needs your decision</b>, then <b>days waiting</b>. Nothing is hidden by this ranking —
+      all <b>8</b> requests are in <a href="#ledger" id="lnkLedger">All requests</a>, with search and sort.
+      Amounts are shown in the currency each request was raised in and are never converted.
+    </p>
+    <p class="rankline" id="rankRequester" hidden>
+      Your requests, ranked by <b>what is blocking each one</b>, then <b>days since it last moved</b>.
+      You have <b>2</b> open. Amounts are shown as raised and are never converted.
+    </p>
+
+    <!-- ===== APPROVER SHAPE ===== -->
+    <div id="qApprover">
+
+      <!-- BAND 1 -->
+      <section class="band act" aria-labelledby="b1">
+        <div class="band-h">
+          <span class="n">1</span>
+          <h2 id="b1">Needs your decision</h2>
+          <span class="why">Submitted, unactioned, oldest first</span>
+        </div>
+
+        <article class="dk sp-wait">
+          <div class="dk-top">
+            <span class="dk-id">PR-2026-0141</span>
+            <span class="dk-ttl">Enclosure fabrication for Q3 production run</span>
+            <span class="dk-amt">₹1,84,500.00</span>
+          </div>
+          <div class="dk-meta">
+            <span><b>Rakesh Chauhan</b> · Production</span>
+            <span>Dustroid batch 12</span>
+            <span>Precision Sheet Metal Works</span>
+            <span>Net 30</span>
+            <span class="pri p2"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M6 0 12 11H0z"/></svg>HIGH</span>
+          </div>
+
+          <div class="stamp" role="group" aria-label="Status: stage Submitted, live, unpaid">
+            <div class="st-new"><span class="k">Stage</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="4"/></svg>
+              Submitted</div>
+            <div class="st-off"><span class="k">State</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><circle cx="6" cy="6" r="3"/></svg>
+              Live</div>
+            <div class="st-stop"><span class="k">Pay</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
+              Unpaid</div>
+          </div>
+          <span class="age hot" style="margin-left:var(--s3)">waiting 3 days</span>
+
+          <ul style="margin:var(--s4) 0 0;padding:0;list-style:none;border:1px solid var(--edge);border-radius:var(--r-ctl);overflow:hidden">
+            <li style="display:flex;gap:var(--s3);padding:8px var(--s3);background:var(--sunken);border-bottom:1px solid var(--edge)">
+              <span class="lbl" style="flex:1">2 lines · what is being bought</span><span class="lbl">Qty</span>
+              <span class="lbl" style="width:110px;text-align:right">Unit</span><span class="lbl" style="width:120px;text-align:right">Line total</span></li>
+            <li style="display:flex;gap:var(--s3);padding:8px var(--s3);font-size:12.5px;border-bottom:1px solid var(--edge)">
+              <span style="flex:1">Powder-coated aluminium enclosure, IP65, 300×200×120 <span class="mono" style="color:var(--muted)">OZ-ENC-D12</span></span>
+              <span class="mono">150 pcs</span><span class="mono" style="width:110px;text-align:right">₹1,050.00</span>
+              <span class="mono" style="width:120px;text-align:right;font-weight:600">₹1,57,500.00</span></li>
+            <li style="display:flex;gap:var(--s3);padding:8px var(--s3);font-size:12.5px">
+              <span style="flex:1">Stainless mounting bracket, pole clamp <span class="mono" style="color:var(--muted)">OZ-BRK-04</span></span>
+              <span class="mono">150 pcs</span><span class="mono" style="width:110px;text-align:right">₹180.00</span>
+              <span class="mono" style="width:120px;text-align:right;font-weight:600">₹27,000.00</span></li>
+          </ul>
+
+          <!-- market.md §4: approver context Oizom uniquely has, already computed
+               in lib/vendorStats.js and displayed nowhere today. -->
+          <p class="dk-note g">You have approved <b class="mono">₹4,02,300</b> with Precision Sheet Metal Works
+            across 6 requests. 1 is still unpaid. Average delivery ran 4 days past expected.</p>
+
+          <div class="acts">
+            <button class="btn pri">Approve <span class="k">A</span></button>
+            <button class="btn warn">Ask for changes <span class="k">C</span></button>
+            <button class="btn">Put on hold <span class="k">H</span></button>
+            <button class="btn">Reject</button>
+            <a class="btn sm" href="#pr" style="margin-left:auto;border:0">Open full request →</a>
+          </div>
+        </article>
+      </section>
+
+      <!-- BAND 2 -->
+      <section class="band stuck" aria-labelledby="b2">
+        <div class="band-h">
+          <span class="n">2</span>
+          <h2 id="b2">Stuck</h2>
+          <span class="why">Held, or sitting in one stage longer than usual</span>
+        </div>
+
+        <article class="dk sp-hold">
+          <div class="dk-top">
+            <span class="dk-id">PR-2026-0138</span>
+            <span class="dk-ttl">LTE modules — vendor confirming stock</span>
+            <span class="dk-amt">$2,310.00</span>
+          </div>
+          <div class="dk-meta">
+            <span><b>Ankit Shah</b> · R&amp;D</span><span>Odosense v2</span><span>Mouser Electronics</span>
+            <span class="pri p2"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M6 0 12 11H0z"/></svg>HIGH</span>
+          </div>
+
+          <!-- HONESTY: On Hold is enterable from Submitted, Approved, Ordered and
+               In Transit. The PRs sheet stores only the word "On Hold", so the
+               stage this request was paused at is NOT recoverable from it. The
+               stamp says so rather than guessing a position. -->
+          <div class="stamp" role="group" aria-label="Status: stage unknown, on hold 6 days, unpaid">
+            <div class="st-unk"><span class="k">Stage</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4.5a2 2 0 1 1 2 2V8"/><circle cx="6" cy="10" r=".8" fill="currentColor"/></svg>
+              Not recorded</div>
+            <div class="st-hold"><span class="k">State</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><rect x="3" y="2" width="2.5" height="8" rx="1"/><rect x="6.5" y="2" width="2.5" height="8" rx="1"/></svg>
+              On hold · 6d</div>
+            <div class="st-stop"><span class="k">Pay</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
+              Unpaid</div>
+          </div>
+
+          <p class="dk-note q"><b>No reason was recorded when this was held.</b> Ankit cannot see why it stopped,
+            and neither can you. Capturing a reason on hold and on reject is the one new field this direction asks for.</p>
+
+          <div class="acts">
+            <button class="btn pri">Take off hold</button>
+            <button class="btn">Add the reason now</button>
+            <button class="btn">Cancel request</button>
+            <a class="btn sm" href="#pr" style="margin-left:auto;border:0">Open full request →</a>
+          </div>
+        </article>
+
+        <article class="dk sp-wait">
+          <div class="dk-top">
+            <span class="dk-id">PR-2026-0140</span>
+            <span class="dk-ttl">Annual NABL calibration for reference analysers</span>
+            <span class="dk-amt">₹68,000.00</span>
+          </div>
+          <div class="dk-meta">
+            <span><b>Priya Nair</b> · QC</span><span>Calibration lab</span><span>NABL Calibration Services</span>
+            <span>On Delivery</span>
+            <span class="pri p3"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><circle cx="6" cy="6" r="4"/></svg>MEDIUM</span>
+          </div>
+          <div class="stamp" role="group" aria-label="Status: stage Approved 4 days, live, unpaid">
+            <div class="st-go"><span class="k">Stage</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5 5 9.5 10 3"/></svg>
+              Approved · 4d</div>
+            <div class="st-off"><span class="k">State</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><circle cx="6" cy="6" r="3"/></svg>Live</div>
+            <div class="st-stop"><span class="k">Pay</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>Unpaid</div>
+          </div>
+          <!-- Coupa's "Pending Buyer Action", translated: derived from missing
+               poNo / invoiceNo. Deliberately NOT keyed on paymentTerm, which
+               prs.gs:157 hardcodes to '' on create — that would flag every PR. -->
+          <p class="dk-note w"><b>Approved 4 days ago, no PO raised.</b> Nothing is wrong with this request; it is
+            waiting on procurement, not on an approver. Missing: PO number, invoice number —
+            <span class="mono">poNo</span> and <span class="mono">invoiceNo</span> are admin-only fields, so you can
+            see the gap here but Kevin has to fill it.</p>
+          <div class="acts">
+            <!-- Every action offered here is one this role can actually perform.
+                 Approved → Ordered is STAFF in the matrix; writing poNo is not
+                 (prs.gs:17, ADMIN_FIELDS). A role-shaped queue that offers a
+                 cross-role action is worse than an unshaped one. -->
+            <button class="btn pri">Mark ordered</button>
+            <button class="btn">Ask Kevin to add the PO</button>
+            <a class="btn sm" href="#pr" style="margin-left:auto;border:0">Open full request →</a>
+          </div>
+        </article>
+      </section>
+
+      <!-- BAND 3 -->
+      <section class="band" aria-labelledby="b3">
+        <div class="band-h">
+          <span class="n">2</span>
+          <h2 id="b3">Moving</h2>
+          <span class="why">On track. Nothing needed from anyone today</span>
+        </div>
+
+        <article class="dk sp-go">
+          <div class="dk-top">
+            <span class="dk-id">PR-2026-0142</span>
+            <span class="dk-ttl">PM sensor evaluation batch for Gen-5 board bring-up</span>
+            <span class="dk-amt">€4,820.00</span>
+          </div>
+          <div class="dk-meta">
+            <span><b>Ankit Shah</b> · R&amp;D</span><span>Polludrone Gen-5</span><span>Sensirion AG</span>
+            <span>Advance 50%</span><span class="mono">PO-2026-0311</span>
+            <span class="pri p1"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M6 0 12 11H0z"/></svg>CRITICAL</span>
+          </div>
+          <div class="stamp" role="group" aria-label="Status: stage In transit, live, paid">
+            <div class="st-wait"><span class="k">Stage</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8h7V4h2l1.5 2.5V8h-1"/><circle cx="4" cy="9.5" r="1.2"/><circle cx="9" cy="9.5" r="1.2"/></svg>
+              In transit</div>
+            <div class="st-off"><span class="k">State</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><circle cx="6" cy="6" r="3"/></svg>Live</div>
+            <div class="st-go"><span class="k">Pay</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5 5 9.5 10 3"/></svg>Paid</div>
+          </div>
+          <span class="age" style="margin-left:var(--s3)">DHL <a href="#track" class="mono">7845 2291 0033</a> · due in 4 days, 29 Jul</span>
+          <div class="acts">
+            <button class="btn">Mark received</button>
+            <a class="btn sm" href="#pr" style="margin-left:auto;border:0">Open full request →</a>
+          </div>
+        </article>
+
+        <article class="dk sp-go">
+          <div class="dk-top">
+            <span class="dk-id">PR-2026-0136</span>
+            <span class="dk-ttl">Solar panels and charge controllers for 30 field units</span>
+            <span class="dk-amt">₹95,400.00</span>
+          </div>
+          <div class="dk-meta">
+            <span><b>Rakesh Chauhan</b> · Device Management</span><span>Fleet retrofit</span><span>Robu.in</span>
+            <span>Advance 50%</span>
+            <span class="pri p1"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M6 0 12 11H0z"/></svg>CRITICAL</span>
+          </div>
+          <div class="stamp" role="group" aria-label="Status: stage Ordered 9 days, live, partially paid">
+            <div class="st-wait"><span class="k">Stage</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2 4.5 6 2.5l4 2v5L6 11.5 2 9.5z"/></svg>
+              Ordered · 9d</div>
+            <div class="st-off"><span class="k">State</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><circle cx="6" cy="6" r="3"/></svg>Live</div>
+            <div class="st-wait"><span class="k">Pay</span>
+              <svg viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="6" r="4.2"/><path d="M6 1.8v8.4" /><path d="M6 1.8A4.2 4.2 0 0 1 6 10.2z" fill="currentColor" stroke="none"/></svg>
+              Part-paid</div>
+          </div>
+          <div class="acts">
+            <button class="btn">Mark in transit</button>
+            <button class="btn">Add tracking</button>
+            <a class="btn sm" href="#pr" style="margin-left:auto;border:0">Open full request →</a>
+          </div>
+        </article>
+      </section>
+
+      <!-- BAND 4 -->
+      <section class="band" aria-labelledby="b4">
+        <div class="band-h"><span class="n">3</span><h2 id="b4">Settled</h2>
+          <span class="why">Closed in the last 30 days · nothing to do</span></div>
+        <details style="background:var(--panel);border:1px solid var(--edge);border-radius:var(--r-panel);box-shadow:var(--e-rest)">
+          <summary style="cursor:pointer;padding:var(--s3) var(--s4);font:600 13px var(--ui);list-style-position:inside">
+            2 received, 1 rejected — show them</summary>
+          <div style="padding:0 var(--s4) var(--s4)">
+            <ul style="list-style:none;font-size:13px">
+              <li style="display:flex;gap:var(--s3);padding:var(--s2) 0;border-top:1px solid var(--edge)">
+                <span style="width:120px" class="id"><a href="#pr" class="mono">PR-2026-0139</a></span>
+                <span style="flex:1">Replacement gas sensors, Pune · Alphasense Ltd</span>
+                <span class="mini"><span class="st-go">Received 18 Jul</span><span class="st-go">Paid</span></span>
+                <span class="mono" style="width:110px;text-align:right">£1,240.00</span></li>
+              <li style="display:flex;gap:var(--s3);padding:var(--s2) 0;border-top:1px solid var(--edge)">
+                <span style="width:120px" class="id"><a href="#pr" class="mono">PR-2026-0135</a></span>
+                <span style="flex:1">Lab consumables and ESD supplies · Amazon Business</span>
+                <span class="mini"><span class="st-go">Received 9 Jul</span><span class="st-go">Paid</span></span>
+                <span class="mono" style="width:110px;text-align:right">₹8,940.00</span></li>
+              <li style="display:flex;gap:var(--s3);padding:var(--s2) 0;border-top:1px solid var(--edge)">
+                <span style="width:120px" class="id"><a href="#pr" class="mono">PR-2026-0137</a></span>
+                <span style="flex:1">Booth display units for IFAT India · Ganesh Enterprise
+                  <span style="display:block;color:var(--muted);font-size:12px">“Use existing booth hardware from last cycle. Resubmit only for the LED panel.”</span></span>
+                <span class="mini"><span class="st-stop">Rejected 15 Jul</span><span class="st-off">Unpaid</span></span>
+                <span class="mono" style="width:110px;text-align:right">₹42,700.00</span></li>
+            </ul>
+          </div>
+        </details>
+      </section>
+    </div>
+
+    <!-- ===== REQUESTER SHAPE — same data, different job ===== -->
+    <div id="qRequester" hidden>
+      <section class="band" aria-labelledby="r1">
+        <div class="band-h"><span class="n">2</span><h2 id="r1">Yours, open</h2>
+          <span class="why">What each one is waiting on</span></div>
+
+        <article class="dk sp-hold">
+          <div class="dk-top"><span class="dk-id">PR-2026-0138</span>
+            <span class="dk-ttl">LTE modules for Odosense v2</span><span class="dk-amt">$2,310.00</span></div>
+          <div class="dk-meta"><span>Mouser Electronics</span><span>Raised 16 Jul</span></div>
+          <div class="stamp" role="group" aria-label="Status: stage not recorded, on hold 6 days, unpaid">
+            <div class="st-unk"><span class="k">Stage</span>Not recorded</div>
+            <div class="st-hold"><span class="k">State</span>On hold · 6d</div>
+            <div class="st-stop"><span class="k">Pay</span>Unpaid</div>
+          </div>
+          <p class="dk-note q"><b>Held by Meera Patel 6 days ago. No reason was recorded.</b>
+            You are not waiting on yourself — this is with procurement.</p>
+          <div class="acts">
+            <!-- Ramp's "Remind", capped at once a day: the cheapest fix for silence -->
+            <button class="btn pri">Ask Meera for an update</button>
+            <span class="age" style="align-self:center">You can send one nudge a day. None sent yet.</span>
+          </div>
+        </article>
+
+        <article class="dk sp-go">
+          <div class="dk-top"><span class="dk-id">PR-2026-0142</span>
+            <span class="dk-ttl">PM sensor evaluation batch, Gen-5</span><span class="dk-amt">€4,820.00</span></div>
+          <div class="dk-meta"><span>Sensirion AG</span><span>Approved by Meera Patel</span></div>
+          <div class="stamp" role="group" aria-label="Status: in transit, live, paid">
+            <div class="st-wait"><span class="k">Stage</span>In transit</div>
+            <div class="st-off"><span class="k">State</span>Live</div>
+            <div class="st-go"><span class="k">Pay</span>Paid</div>
+          </div>
+          <p class="dk-note g">Shipped with DHL on 2 Jul. <b>Arriving Wed 29 July</b> — 4 days.
+            Tracking <a href="#track" class="mono">7845 2291 0033</a>.</p>
+        </article>
+      </section>
+
+      <section class="band" aria-labelledby="r2">
+        <div class="band-h"><span class="n">1</span><h2 id="r2">Needs you</h2><span class="why">Rejected but recoverable</span></div>
+        <p class="rankline" style="margin:0">Nothing of yours was rejected. The one rejection this month
+          (<span class="mono">PR-2026-0137</span>) belongs to Sneha Desai.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ---------- VIEW 2 · THE LEDGER ---------- -->
+  <section class="view" id="viewLedger" aria-labelledby="lh" hidden>
+    <div class="commit"><h1 id="lh">All requests</h1><span class="date">8 requests · 2026</span></div>
+    <p class="rankline">The queue decides what to do. This decides what happened. Everything is here,
+      filterable and sortable, and it is the only screen that sums money.</p>
+
+    <!-- MIXED CURRENCY, HONESTLY -->
+    <div class="money">
+      <div class="money-h">
+        <span class="lbl">Committed by currency</span>
+        <span class="note">7 requests · the rejected one is excluded · <b>no conversion applied — Oizom stores no FX rate</b></span>
+      </div>
+      <div class="money-g">
+        <div class="money-c"><span class="lbl">INR · 4 requests</span><span class="v">₹3,56,840.00</span><span class="s">of which ₹2,52,500 unpaid</span></div>
+        <div class="money-c"><span class="lbl">EUR · 1 request</span><span class="v">€4,820.00</span><span class="s">paid in full</span></div>
+        <div class="money-c"><span class="lbl">USD · 1 request</span><span class="v">$2,310.00</span><span class="s">unpaid · on hold</span></div>
+        <div class="money-c"><span class="lbl">GBP · 1 request</span><span class="v">£1,240.00</span><span class="s">paid in full</span></div>
+        <div class="money-c unpaid"><span class="lbl">Unpaid, all currencies</span><span class="v">3</span><span class="s">requests, not a sum</span></div>
+      </div>
+    </div>
+
+    <div class="toolbar" role="search">
+      <label class="fld"><span class="lbl">Find</span>
+        <input class="ctl search" type="search" placeholder="ID, item, vendor, project, requester" aria-label="Search requests"></label>
+      <label class="fld"><span class="lbl">Stage</span>
+        <select class="ctl"><option>Any stage</option><option>Submitted</option><option>Approved</option><option>Ordered</option><option>In transit</option><option>Received</option></select></label>
+      <label class="fld"><span class="lbl">State</span>
+        <select class="ctl"><option>Live only</option><option>Any state</option><option>On hold</option><option>Rejected</option><option>Cancelled</option></select></label>
+      <label class="fld"><span class="lbl">Payment</span>
+        <select class="ctl"><option>Any</option><option>Unpaid</option><option>Partially paid</option><option>Paid</option><option>FOC / Free</option></select></label>
+      <label class="fld"><span class="lbl">Department</span>
+        <select class="ctl"><option>All departments</option><option>R&amp;D</option><option>Production</option><option>QC</option><option>Support</option><option>Marketing</option><option>Device Management</option><option>Admin</option></select></label>
+      <span class="grow"></span>
+      <button class="btn sm">Export CSV</button>
+    </div>
+
+    <div class="tblwrap">
+      <table>
+        <caption>All purchase requests, newest first. 8 shown of 8. Sorted by date raised.</caption>
+        <thead>
+          <tr>
+            <th scope="col"><button type="button">Request</button></th>
+            <th scope="col"><button type="button">Raised <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true" fill="currentColor"><path d="M5 8 1 3h8z"/></svg></button><span class="sronly">, sorted descending</span></th>
+            <th scope="col">Requester &amp; dept</th>
+            <th scope="col">What</th>
+            <th scope="col">Vendor</th>
+            <th scope="col">Priority</th>
+            <th scope="col"><button type="button">Amount</button></th>
+            <th scope="col">Stage · State · Pay</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id"><a href="#pr">PR-2026-0142</a></td>
+            <td class="n">02 Jul<span class="sub">23d</span></td>
+            <td>Ankit Shah<span class="sub">R&amp;D</span></td>
+            <td>SPS30 particulate matter sensor module<span class="sub">3 lines · 101 pcs</span></td>
+            <td>Sensirion AG<span class="sub">Switzerland</span></td>
+            <td><span class="pri p1"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M6 0 12 11H0z"/></svg>CRITICAL</span></td>
+            <td class="n">€4,820.00</td>
+            <td><span class="mini"><span class="st-wait">In transit</span><span class="st-off">Live</span><span class="st-go">Paid</span></span></td>
+          </tr>
+          <tr>
+            <td class="id"><a href="#pr">PR-2026-0141</a></td>
+            <td class="n">22 Jul<span class="sub">3d</span></td>
+            <td>Rakesh Chauhan<span class="sub">Production</span></td>
+            <td>Powder-coated aluminium enclosure, IP65<span class="sub">2 lines · 300 pcs</span></td>
+            <td>Precision Sheet Metal Works<span class="sub">India</span></td>
+            <td><span class="pri p2"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M6 0 12 11H0z"/></svg>HIGH</span></td>
+            <td class="n">₹1,84,500.00</td>
+            <td><span class="mini"><span class="st-new">Submitted&nbsp;3d</span><span class="st-off">Live</span><span class="st-stop">Unpaid</span></span></td>
+          </tr>
+          <tr>
+            <td class="id"><a href="#pr">PR-2026-0140</a></td>
+            <td class="n">20 Jul<span class="sub">5d</span></td>
+            <td>Priya Nair<span class="sub">QC</span></td>
+            <td>NABL calibration — reference PM analyser<span class="sub">2 lines · 3 pcs</span></td>
+            <td>NABL Calibration Services<span class="sub">India</span></td>
+            <td><span class="pri p3"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><circle cx="6" cy="6" r="4"/></svg>MEDIUM</span></td>
+            <td class="n">₹68,000.00</td>
+            <td><span class="mini"><span class="st-go">Approved&nbsp;4d</span><span class="st-off">Live</span><span class="st-stop">Unpaid</span></span></td>
+          </tr>
+          <tr>
+            <td class="id"><a href="#pr">PR-2026-0139</a></td>
+            <td class="n">05 Jul<span class="sub">20d</span></td>
+            <td>Devendra Joshi<span class="sub">Support</span></td>
+            <td>NO2-B43F electrochemical sensor<span class="sub">2 lines · 16 pcs</span></td>
+            <td>Alphasense Ltd<span class="sub">UK</span></td>
+            <td><span class="pri p4"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><rect x="2" y="5" width="8" height="2.5" rx="1"/></svg>LOW</span></td>
+            <td class="n">£1,240.00</td>
+            <td><span class="mini"><span class="st-go">Received</span><span class="st-off">Closed</span><span class="st-go">Paid</span></span></td>
+          </tr>
+          <tr>
+            <td class="id"><a href="#pr">PR-2026-0138</a></td>
+            <td class="n">16 Jul<span class="sub">9d</span></td>
+            <td>Ankit Shah<span class="sub">R&amp;D</span></td>
+            <td>LTE module, Quectel EG915U<span class="sub">1 line</span></td>
+            <td>Mouser Electronics<span class="sub">USA</span></td>
+            <td><span class="pri p2"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M6 0 12 11H0z"/></svg>HIGH</span></td>
+            <td class="n">$2,310.00</td>
+            <td><span class="mini"><span class="st-unk">Not recorded</span><span class="st-hold">On hold&nbsp;6d</span><span class="st-stop">Unpaid</span></span></td>
+          </tr>
+          <tr>
+            <td class="id"><a href="#pr">PR-2026-0137</a></td>
+            <td class="n">12 Jul<span class="sub">13d</span></td>
+            <td>Sneha Desai<span class="sub">Marketing</span></td>
+            <td>Booth display units for IFAT India<span class="sub">1 line</span></td>
+            <td>Ganesh Enterprise<span class="sub">India</span></td>
+            <td><span class="pri p3"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><circle cx="6" cy="6" r="4"/></svg>MEDIUM</span></td>
+            <td class="n">₹42,700.00</td>
+            <!-- Rejected, but the payment axis still holds a real stored value.
+                 A direction that argues "all three axes, always" does not blank one. -->
+            <td><span class="mini"><span class="st-unk">Not recorded</span><span class="st-stop">Rejected&nbsp;10d</span><span class="st-off">Unpaid</span></span></td>
+          </tr>
+          <tr>
+            <td class="id"><a href="#pr">PR-2026-0136</a></td>
+            <td class="n">10 Jul<span class="sub">15d</span></td>
+            <td>Rakesh Chauhan<span class="sub">Device Mgmt</span></td>
+            <td>Solar panel 40W + MPPT charge controller<span class="sub">2 lines · 60 pcs</span></td>
+            <td>Robu.in<span class="sub">India</span></td>
+            <td><span class="pri p1"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><path d="M6 0 12 11H0z"/></svg>CRITICAL</span></td>
+            <td class="n">₹95,400.00</td>
+            <td><span class="mini"><span class="st-wait">Ordered&nbsp;9d</span><span class="st-off">Live</span><span class="st-wait">Part-paid</span></span></td>
+          </tr>
+          <tr>
+            <td class="id"><a href="#pr">PR-2026-0135</a></td>
+            <td class="n">01 Jul<span class="sub">24d</span></td>
+            <td>Priya Nair<span class="sub">Admin</span></td>
+            <td>Lab consumables and ESD supplies<span class="sub">4 lines</span></td>
+            <td>Amazon Business<span class="sub">India</span></td>
+            <td><span class="pri p4"><svg viewBox="0 0 12 12" aria-hidden="true" fill="currentColor"><rect x="2" y="5" width="8" height="2.5" rx="1"/></svg>LOW</span></td>
+            <td class="n">₹8,940.00</td>
+            <td><span class="mini"><span class="st-go">Received</span><span class="st-off">Closed</span><span class="st-go">Paid</span></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="legend">
+      <b>Reading the stamp.</b> Three cells, always in this order.
+      <code>Stage</code> is where the request sits in the buying pipeline.
+      <code>State</code> is whether it is running, paused or finished — <em>On hold</em> and <em>Rejected</em> are
+      states, not stages, because either can happen from almost anywhere and both are reversible.
+      <code>Pay</code> runs independently of both: <span class="mono">PR-2026-0139</span> is received and paid,
+      <span class="mono">PR-2026-0140</span> is approved and unpaid.
+      <code>Not recorded</code> is drawn hatched, and means exactly that — the sheet stores one status word,
+      so when a request is put on hold the stage it paused at is genuinely unknown until the audit log is read.
+      It is never guessed.
+    </p>
+  </section>
+
+  </main>
+</div>
+
+<script>
+/* Mockup wiring only: two view toggles and a role preview switch.
+   Nothing here is a proposal about implementation. */
+(function(){
+  var tabs = {tabQueue:'viewQueue', tabLedger:'viewLedger'};
+  function go(id){
+    for (var t in tabs){
+      var on = t === id, btn = document.getElementById(t);
+      btn.setAttribute('aria-current', on ? 'page' : 'false');
+      document.getElementById(tabs[t]).hidden = !on;
+    }
+  }
+  Object.keys(tabs).forEach(function(t){ document.getElementById(t).onclick = function(){ go(t); }; });
+  document.getElementById('lnkLedger').onclick = function(e){ e.preventDefault(); go('tabLedger'); };
+
+  var A = document.getElementById('asApprover'), R = document.getElementById('asRequester');
+  function role(isApp){
+    A.setAttribute('aria-pressed', isApp); R.setAttribute('aria-pressed', !isApp);
+    document.getElementById('qApprover').hidden = !isApp;
+    document.getElementById('qRequester').hidden = isApp;
+    document.getElementById('rankApprover').hidden = !isApp;
+    document.getElementById('rankRequester').hidden = isApp;
+    document.querySelector('#viewQueue .commit h1').textContent =
+      isApp ? 'One decision is waiting on you.' : 'Two of your requests are open.';
+    document.querySelector('.whoami b').textContent = isApp ? 'Meera Patel' : 'Ankit Shah';
+    document.querySelector('.whoami .mono').textContent =
+      isApp ? 'meera@oizom.com · approver' : 'ankit@oizom.com · requester';
+    document.querySelector('#tabQueue .cnt').textContent = isApp ? '5' : '2';
+  }
+  A.onclick = function(){ role(true); }; R.onclick = function(){ role(false); };
+})();
+</script>
+</body>
+</html>
