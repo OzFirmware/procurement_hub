@@ -5,7 +5,6 @@ import { STATUSES, PAYMENT_STATUSES } from '../lib/status.js';
 import { computeLineTotal, computeTotalAmount } from '../lib/items.js';
 import { fmtMoney } from '../lib/currency.js';
 import { searchCurrencies, isCurrency, currencyLabel } from '../lib/currencies.js';
-import { saveDraft, peekDraft, clearDraft } from '../lib/prDraft.js';
 
 const PAYMENTS = PAYMENT_STATUSES;
 const FALLBACK = {
@@ -20,7 +19,7 @@ const list = (s, name) => (s.lists && s.lists[name] && s.lists[name].length ? s.
 const HINTS = {
   project: 'Which running project this purchase belongs to. Only your department’s projects are listed — ask an admin to add one if yours is missing.',
   purpose: 'One line on why this purchase is needed, e.g. “Calibration jigs for the EnvizomPro batch”.',
-  vendor: 'The registered vendor you’ll buy from. Only vendors mapped to your department appear — an admin can register new ones.',
+  vendor: 'The vendor you’ll buy from. Search picks from vendors already registered for your department — if yours isn’t listed, just type its name and an admin will be notified to add it.',
   currency: 'Currency of the vendor’s quote. Type to search any world currency by code, name or symbol.',
   priority: 'Critical = must-have immediately, expedite even at extra cost. High = procure as soon as possible. Medium = needed within the normal purchase cycle. Low = procure when budget allows.',
   expected: 'Date you expect the goods to arrive — used for the In-Transit tracking on the dashboard.',
@@ -80,17 +79,8 @@ function collectItems(form) {
 
 export function prFormView(el, s, editId) {
   const editing = editId ? s.prs.find(p => p.id === editId) : null;
-  let p = editing || {};
-  let items = editing ? (p.items || []) : [{}];
-  // Returning from the "+ Add new vendor" redirect: restore whatever the
-  // requester had already typed (and the newly picked vendor) before we
-  // navigated them away — see lib/prDraft.js.
-  const draft = peekDraft();
-  clearDraft(); // one-shot: never let a stale draft leak into an unrelated visit
-  if (draft && draft.editId === (editId || '')) {
-    p = { ...p, ...draft.fields };
-    if (draft.items && draft.items.length) items = draft.items;
-  }
+  const p = editing || {};
+  const items = editing ? (p.items || []) : [{}];
   const me = s.me || { role: '' };
   const staff = ['approver', 'admin', 'finance'].includes(me.role);
   // projects and vendors for the PR's department (creating: the user's own)
@@ -133,10 +123,10 @@ export function prFormView(el, s, editId) {
               <label>${lbl('Project*', 'project')} <select name="project" required>${opts(projNames, p.project || '', true)}</select></label>
               <label>${lbl('Purpose', 'purpose')} <input name="purpose" value="${esc(p.purpose)}"></label>
               <div class="pd-field full">${lbl('Vendor', 'vendor')}
-                <input id="venSearch" class="combo" autocomplete="off" spellcheck="false" placeholder="Search vendors…" value="${esc(vendorLabelOf(p.vendor))}">
+                <input id="venSearch" class="combo" autocomplete="off" spellcheck="false" placeholder="Search vendors, or type a new vendor's name…" value="${esc(vendorLabelOf(p.vendor))}">
                 <input type="hidden" name="vendor" value="${esc(p.vendor || '')}">
                 <div class="curList" id="venList" hidden></div>
-                <div><button type="button" class="btn" id="venAddNewBtn" style="margin-top:8px">Vendor not listed? Add new vendor</button></div>
+                <div class="pd-sub" id="venHint" hidden>Not a registered vendor — that's fine, it'll still go on this PR, and an admin will be notified to add it properly.</div>
               </div>
               <div class="pd-field">${lbl('Currency', 'currency')}
                 <input id="curSearch" class="combo" autocomplete="off" spellcheck="false" value="${esc(currencyLabel(p.currency || 'INR'))}">
@@ -275,35 +265,27 @@ export function prFormView(el, s, editId) {
       .sort((a, b) => (a.displayName || a.name).localeCompare(b.displayName || b.name))
       .map(v => ({ value: v.name, main: v.displayName || v.name, name: v.displayName ? v.name : '', sub: v.category || '' }));
   };
+  const venHint = el.querySelector('#venHint');
+  const updateVenHint = () => {
+    const v = form.querySelector('[name="vendor"]').value.trim();
+    venHint.hidden = !v || deptVendors.some(x => x.name.toLowerCase() === v.toLowerCase());
+  };
   wireCombo('venSearch', 'venList', 'vendor', {
     search: vendorSearch,
+    // No match in the registry doesn't reject the text — it commits as a new
+    // vendor's name, so a requester can raise a PR without waiting on an
+    // admin to add it first (see venHint below and the vendor-requested
+    // notification apps-script/prs.gs's create route sends).
     resolve: t => {
       const hit = deptVendors.find(v => v.name.toLowerCase() === t.toLowerCase()
         || (v.displayName || '').toLowerCase() === t.toLowerCase());
-      return hit ? hit.name : null;
+      return hit ? hit.name : t;
     },
     toLabel: v => vendorLabelOf(v),
-    allowEmpty: true // vendor is optional
+    allowEmpty: true, // vendor is optional
+    onCommit: updateVenHint
   });
-
-  const venSearchInput = el.querySelector('#venSearch');
-  // Redirects to a dedicated Add Vendor page (open to every role, unlike the
-  // admin-only Vendors section) and back — snapshot everything typed so far
-  // into sessionStorage first, since the navigation fully unmounts this view.
-  el.querySelector('#venAddNewBtn').onclick = () => {
-    const fields = {};
-    for (const [k, v] of new FormData(form)) if (!k.startsWith('i_')) fields[k] = v;
-    const draftItems = collectItems(form);
-    saveDraft({
-      editId: editId || '',
-      fields,
-      items: draftItems.length ? draftItems : [{}],
-      department: dept,
-      prefillVendorName: venSearchInput.value.trim(),
-      returnHash: location.hash
-    });
-    location.hash = '#/vendor-new';
-  };
+  updateVenHint();
 
   el.querySelector('#addItem').onclick = () => {
     rowsEl.insertAdjacentHTML('beforeend', itemRowHtml(s, {}, rowsEl.children.length, typeNames, showZoho));

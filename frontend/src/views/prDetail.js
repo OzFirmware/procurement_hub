@@ -1,7 +1,7 @@
 import { api } from '../api.js';
 import { store } from '../state.js';
 import { toast, esc, chip, fmtDate, initials } from '../ui.js';
-import { nameIndex, personName } from '../lib/people.js';
+import { personName } from '../lib/people.js';
 import { nextStates } from '../lib/status.js';
 import { fmtMoney } from '../lib/currency.js';
 
@@ -41,15 +41,15 @@ export function prDetailView(el, s, id) {
   if (showPoFor !== id) { showPo = false; showPoFor = id; } // navigating to a different PR closes any open panel
   const me = s.me || { role: '', email: '', department: '' };
   const isAdmin = me.role === 'admin';
-  // built from every PR, not just this one — an approver whose name cell is
-  // empty here is usually named on some other row
-  const names = nameIndex(s.prs);
   const isOwn = p.requesterEmail.toLowerCase() === me.email.toLowerCase();
   // finance needs the Procurement details card (PO #, payment term) to know
-  // what they're paying, but never gets status-changing buttons (nextStates
-  // below is keyed off the STAFF token list in status.js, which finance isn't in)
+  // what they're paying, but never gets status-changing buttons — 'finance'
+  // is never a role token in status.js's transition matrix
   const isStaff = ['approver', 'admin', 'finance'].includes(me.role);
-  const canEdit = isStaff || (isOwn && p.status === 'Submitted');
+  // Editing (and every status move beyond the initial approve/reject) is
+  // admin-only now — see status.js. An approver's access ends at that one
+  // decision; a requester can still edit their own PR while it's Submitted.
+  const canEdit = isAdmin || (isOwn && p.status === 'Submitted');
   const sameDept = String(p.department || '').toLowerCase() === String(me.department || '').toLowerCase();
   const targets = nextStates(p.status, me.role, isOwn, sameDept);
   // Zoho part numbers only exist in Production's workflow
@@ -112,9 +112,9 @@ export function prDetailView(el, s, id) {
           ${field('Payment status', esc(p.paymentStatus))}
         </div>
         <div class="pd-people">
-          ${person('Requested by', personName(p.requestedByName, p.requesterEmail, names), p.requesterEmail, 'Created on ' + fmtDate(p.createdAt))}
+          ${person('Requested by', personName(p.requestedByName, p.requesterEmail, p.approverEmail, p.approvedByName), p.requesterEmail, 'Created on ' + fmtDate(p.createdAt))}
           ${(p.approverEmail || p.approvedByName)
-            ? person('Approved by', personName(p.approvedByName, p.approverEmail, names), p.approverEmail, p.approvedAt ? 'on ' + fmtDate(p.approvedAt) : '')
+            ? person('Approved by', personName(p.approvedByName, p.approverEmail, p.requesterEmail, p.requestedByName), p.approverEmail, p.approvedAt ? 'on ' + fmtDate(p.approvedAt) : '')
             : ''}
         </div>
         </div>

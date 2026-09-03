@@ -5,20 +5,20 @@ export const STATUSES = ['Submitted', 'Approved', 'Rejected', 'Ordered', 'In Tra
 // or Paid) and is what Finance acts on.
 export const PAYMENT_STATUSES = ['Unpaid', 'Paid', 'Partially Paid', 'FOC / Free'];
 
-// role tokens: 'approver' and 'admin' are staff; 'requester:own' means
-// role==='requester' AND the PR belongs to the caller; 'approver:dept' means
-// role==='approver' AND their department matches the PR's — the initial
-// approve/reject decision is scoped to the requester's department, but admin
-// always bypasses it and every later staff move (reverting, ordering,
-// shipping, ...) stays open to any approver as before.
-const STAFF = ['approver', 'admin'];
+// role tokens: 'requester:own' means role==='requester' AND the PR belongs
+// to the caller; 'approver:dept' means role==='approver' AND their
+// department matches the PR's. An approver's whole job is that one decision
+// — approve or reject a Submitted PR from their own department. Every move
+// after that (ordering, shipping, cancelling, holding, reverting) is
+// admin-only; a requester keeps just their own two self-service moves
+// (cancel their own Submitted PR, resubmit their own Rejected one).
 const T = {
-  'Submitted':  { 'Approved': ['admin', 'approver:dept'], 'Rejected': ['admin', 'approver:dept'], 'Cancelled': [...STAFF, 'requester:own'], 'On Hold': STAFF },
-  'Approved':   { 'Ordered': STAFF, 'Cancelled': STAFF, 'On Hold': STAFF, 'Rejected': STAFF, 'Submitted': STAFF },
-  'Ordered':    { 'In Transit': STAFF, 'Received': STAFF, 'Cancelled': STAFF, 'On Hold': STAFF },
-  'In Transit': { 'Received': STAFF, 'On Hold': STAFF },
-  'On Hold':    { 'Submitted': STAFF, 'Approved': STAFF, 'Ordered': STAFF, 'Cancelled': STAFF },
-  'Rejected':   { 'Submitted': [...STAFF, 'requester:own'], 'Approved': STAFF },
+  'Submitted':  { 'Approved': ['admin', 'approver:dept'], 'Rejected': ['admin', 'approver:dept'], 'Cancelled': ['admin', 'requester:own'], 'On Hold': ['admin'] },
+  'Approved':   { 'Ordered': ['admin'], 'Cancelled': ['admin'], 'On Hold': ['admin'], 'Rejected': ['admin'], 'Submitted': ['admin'] },
+  'Ordered':    { 'In Transit': ['admin'], 'Received': ['admin'], 'Cancelled': ['admin'], 'On Hold': ['admin'] },
+  'In Transit': { 'Received': ['admin'], 'On Hold': ['admin'] },
+  'On Hold':    { 'Submitted': ['admin'], 'Approved': ['admin'], 'Ordered': ['admin'], 'Cancelled': ['admin'] },
+  'Rejected':   { 'Submitted': ['admin', 'requester:own'], 'Approved': ['admin'] },
   'Received':   {},
   'Cancelled':  {}
 };

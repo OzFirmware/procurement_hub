@@ -61,6 +61,19 @@ function sheet_(name, headers) {
 
 function nowIso_() { return new Date().toISOString(); }
 
+// Mirrors frontend/src/ui.js's displayName() — a readable guess from the
+// email local-part. Used as a fallback wherever a person's name is recorded
+// (requestedByName, approvedByName) so that row is never left with a blank
+// name — some Google accounts return an empty OAuth "name" claim, and a
+// blank name field there previously made the UI borrow a name from a
+// completely unrelated PR, which could show the wrong person as the approver.
+function displayNameFromEmail_(email) {
+  var local = String(email || '').split('@')[0];
+  var parts = local.split(/[._-]+/).filter(function (s) { return s; });
+  if (!parts.length) return email || '';
+  return parts.map(function (p) { return p[0].toUpperCase() + p.slice(1); }).join(' ');
+}
+
 // Convert a sheet cell to a plain string (dates → ISO date part)
 function cellStr_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, 'UTC', "yyyy-MM-dd'T'HH:mm:ss'Z'");

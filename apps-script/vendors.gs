@@ -109,42 +109,6 @@ registerRoute_('vendorSet', { minRole: 'admin' }, function (user, body) {
   });
 });
 
-// Lets any requester register a brand-new vendor inline while raising a PR
-// (see the "+ Add new vendor" panel in prForm.js) — deliberately narrower
-// than vendorSet above: only ever INSERTS a new row (never edits/overwrites
-// an existing vendor) and only accepts a safe subset of fields, so admins
-// still own vendor vetting (bank/tax/Zoho fields stay admin-only, edited on
-// the Vendors admin page). A vendor added this way can't reach Zoho Books
-// until an admin fills in its Zoho Vendor ID — see zoho.gs's zohoPushPo.
-var VENDOR_QUICK_FIELDS = ['category', 'contactPerson', 'phone', 'email', 'address', 'website', 'notes'];
-registerRoute_('vendorQuickAdd', { minRole: 'requester' }, function (user, body) {
-  return withLock_(function () {
-    var name = String(body.name || '').trim();
-    if (!name) throw new Error('Vendor name required');
-    var lower = name.toLowerCase();
-    var vendors = listVendors_();
-    if (vendors.some(function (v) { return v.name.toLowerCase() === lower; })) {
-      throw new Error('A vendor named "' + name + '" already exists — search for it instead');
-    }
-    var dept = String(body.department || user.department || '').trim();
-    var sh = vendorSheet_();
-    var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
-    var row = [];
-    head.forEach(function (h, c) {
-      if (h === 'name') row[c] = name;
-      else if (h === 'departments') row[c] = dept;
-      else if (h === 'addedBy') row[c] = user.email;
-      else if (h === 'addedAt') row[c] = nowIso_();
-      else if (VENDOR_QUICK_FIELDS.indexOf(h) >= 0 && body[h] != null) row[c] = String(body[h]).trim();
-      else row[c] = '';
-    });
-    sh.appendRow(row);
-    log_(user, '', 'vendorQuickAdd', name + (dept ? ' (' + dept + ')' : ''));
-    var vendor = listVendors_().filter(function (v) { return v.name.toLowerCase() === lower; })[0];
-    return { vendor: vendor, vendors: listVendors_() };
-  });
-});
-
 registerRoute_('vendorRemove', { minRole: 'admin' }, function (user, body) {
   return withLock_(function () {
     var name = String(body.name || '').trim().toLowerCase();

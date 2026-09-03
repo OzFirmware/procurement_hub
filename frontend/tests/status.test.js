@@ -24,7 +24,7 @@ describe('canTransition', () => {
   it('requester can resubmit own rejected PR', () => {
     expect(canTransition('Rejected', 'Submitted', 'requester', true)).toBe(true);
   });
-  it('admin can do everything approver can', () => {
+  it('admin manages the full post-approval lifecycle', () => {
     expect(canTransition('Approved', 'Ordered', 'admin', false)).toBe(true);
     expect(canTransition('Ordered', 'In Transit', 'admin', false)).toBe(true);
   });
@@ -42,11 +42,22 @@ describe('canTransition', () => {
   it('no skipping: Submitted cannot jump to Received', () => {
     expect(canTransition('Submitted', 'Received', 'admin', false)).toBe(false);
   });
-  it('staff can revise a decision within the approval loop regardless of department', () => {
-    expect(canTransition('Approved', 'Rejected', 'approver', false, false)).toBe(true);
-    expect(canTransition('Approved', 'Submitted', 'approver', false, false)).toBe(true);
-    expect(canTransition('Rejected', 'Approved', 'approver', false, false)).toBe(true);
-    expect(canTransition('Rejected', 'Rejected', 'approver', false, false)).toBe(false);
+  it('an approver cannot revise a decision once it is made — that is admin-only', () => {
+    expect(canTransition('Approved', 'Rejected', 'approver', false, false)).toBe(false);
+    expect(canTransition('Approved', 'Submitted', 'approver', false, false)).toBe(false);
+    expect(canTransition('Rejected', 'Approved', 'approver', false, false)).toBe(false);
+    // even a same-department approver, since the loop closed at their decision
+    expect(canTransition('Approved', 'Rejected', 'approver', false, true)).toBe(false);
+  });
+  it('admin can revise a decision regardless of department', () => {
+    expect(canTransition('Approved', 'Rejected', 'admin', false, false)).toBe(true);
+    expect(canTransition('Approved', 'Submitted', 'admin', false, false)).toBe(true);
+    expect(canTransition('Rejected', 'Approved', 'admin', false, false)).toBe(true);
+    expect(canTransition('Rejected', 'Rejected', 'admin', false, false)).toBe(false);
+  });
+  it('an approver cannot cancel or hold a Submitted PR either — decide it or leave it', () => {
+    expect(canTransition('Submitted', 'Cancelled', 'approver', false, true)).toBe(false);
+    expect(canTransition('Submitted', 'On Hold', 'approver', false, true)).toBe(false);
   });
   it('requester cannot use the approval loop', () => {
     expect(canTransition('Approved', 'Rejected', 'requester', true)).toBe(false);
@@ -55,13 +66,12 @@ describe('canTransition', () => {
 });
 
 describe('nextStates', () => {
-  it('same-department approver sees the full Submitted loop', () => {
+  it('same-department approver can only approve or reject — nothing else', () => {
     expect(nextStates('Submitted', 'approver', false, true).sort())
-      .toEqual(['Approved', 'Cancelled', 'On Hold', 'Rejected'].sort());
+      .toEqual(['Approved', 'Rejected'].sort());
   });
-  it('a different-department approver can still Cancel/On Hold, but not decide', () => {
-    expect(nextStates('Submitted', 'approver', false, false).sort())
-      .toEqual(['Cancelled', 'On Hold'].sort());
+  it('a different-department approver has no moves at all', () => {
+    expect(nextStates('Submitted', 'approver', false, false)).toEqual([]);
   });
   it('On Hold resumes to active states', () => {
     expect(nextStates('On Hold', 'admin', false).sort())

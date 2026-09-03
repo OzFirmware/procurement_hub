@@ -18,18 +18,19 @@ var EDITABLE_FIELDS = ['department', 'project', 'purpose', 'requestedByName', 'v
 var ADMIN_FIELDS = PR_HEADERS.filter(function (h) { return h !== 'id'; });
 
 // ==== status matrix — MUST mirror frontend/src/lib/status.js ====
-// 'approver:dept' = role==='approver' AND their department matches the PR's;
-// the initial approve/reject decision is scoped to the requester's
-// department, admin always bypasses it, and every later staff move stays
-// open to any approver as before.
-var STAFF_ = ['approver', 'admin'];
+// 'approver:dept' = role==='approver' AND their department matches the PR's.
+// An approver's whole job is that one decision: approve or reject a
+// Submitted PR from their own department. Every move after that — ordering,
+// shipping, cancelling, putting on hold, reverting — is admin-only; a
+// requester keeps just their own two self-service moves (cancel their own
+// Submitted PR, resubmit their own Rejected one).
 var TRANSITIONS_ = {
-  'Submitted':  { 'Approved': ['admin', 'approver:dept'], 'Rejected': ['admin', 'approver:dept'], 'Cancelled': STAFF_.concat(['requester:own']), 'On Hold': STAFF_ },
-  'Approved':   { 'Ordered': STAFF_, 'Cancelled': STAFF_, 'On Hold': STAFF_, 'Rejected': STAFF_, 'Submitted': STAFF_ },
-  'Ordered':    { 'In Transit': STAFF_, 'Received': STAFF_, 'Cancelled': STAFF_, 'On Hold': STAFF_ },
-  'In Transit': { 'Received': STAFF_, 'On Hold': STAFF_ },
-  'On Hold':    { 'Submitted': STAFF_, 'Approved': STAFF_, 'Ordered': STAFF_, 'Cancelled': STAFF_ },
-  'Rejected':   { 'Submitted': STAFF_.concat(['requester:own']), 'Approved': STAFF_ },
+  'Submitted':  { 'Approved': ['admin', 'approver:dept'], 'Rejected': ['admin', 'approver:dept'], 'Cancelled': ['admin', 'requester:own'], 'On Hold': ['admin'] },
+  'Approved':   { 'Ordered': ['admin'], 'Cancelled': ['admin'], 'On Hold': ['admin'], 'Rejected': ['admin'], 'Submitted': ['admin'] },
+  'Ordered':    { 'In Transit': ['admin'], 'Received': ['admin'], 'Cancelled': ['admin'], 'On Hold': ['admin'] },
+  'In Transit': { 'Received': ['admin'], 'On Hold': ['admin'] },
+  'On Hold':    { 'Submitted': ['admin'], 'Approved': ['admin'], 'Ordered': ['admin'], 'Cancelled': ['admin'] },
+  'Rejected':   { 'Submitted': ['admin', 'requester:own'], 'Approved': ['admin'] },
   'Received':   {},
   'Cancelled':  {}
 };
@@ -144,11 +145,14 @@ registerRoute_('create', { minRole: 'requester' }, function (user, body) {
   if (!d.project || running.indexOf(String(d.project)) < 0) {
     throw new Error('Select a running project for ' + user.department);
   }
-  if (d.vendor) {
+  // A vendor not yet in the registry doesn't block the PR — the requester
+  // just types the name, and whoever's on the Vendors admin page gets a
+  // notification to add it properly (Zoho ID, bank details, etc. come later).
+  var vendorText = String(d.vendor || '').trim();
+  var newVendorRequested = false;
+  if (vendorText) {
     var okVendors = vendorsFor_(user.department).map(function (v) { return v.toLowerCase(); });
-    if (okVendors.indexOf(String(d.vendor).trim().toLowerCase()) < 0) {
-      throw new Error('Vendor not registered for ' + user.department + ' — ask an admin to add it in the Vendors tab');
-    }
+    newVendorRequested = okVendors.indexOf(vendorText.toLowerCase()) < 0;
   }
   var okTypes = materialTypesFor_(user.department).map(function (t) { return t.toLowerCase(); });
   if (!okTypes.length) {
@@ -172,7 +176,8 @@ registerRoute_('create', { minRole: 'requester' }, function (user, body) {
     EDITABLE_FIELDS.forEach(function (f) { pr[f] = d[f] != null ? String(d[f]) : ''; });
     // department and requester name come from the account, never the form
     pr.department = user.department;
-    pr.requestedByName = user.name || '';
+    pr.requestedByName = user.name || displayNameFromEmail_(user.email);
+    pr.vendor = vendorText;
     pr.paymentStatus = d.paymentStatus || 'Unpaid'; // mandatory, defaults Unpaid
     pr.paymentTerm = ''; // lives on the vendor record now
     pr.totalAmount = String(norm.totalAmount);
@@ -183,6 +188,12 @@ registerRoute_('create', { minRole: 'requester' }, function (user, body) {
       (pr.requestedByName || user.email) + ' raised ' + pr.id + ' (' + pr.department + '): ' + itemSummary_(norm.items) +
       (pr.totalAmount ? ' — total ' + pr.totalAmount + ' ' + (pr.currency || 'INR') : ''),
       'Procurement Hub: new PR ' + pr.id);
+    if (newVendorRequested) {
+      notify_('vendor-requested', admins_(), pr.id,
+        (pr.requestedByName || user.email) + ' raised ' + pr.id + ' (' + pr.department + ') for a vendor that isn\'t registered yet: "' +
+        vendorText + '" — add it on the Vendors admin page so future PRs can select it.',
+        'Procurement Hub: new vendor requested — ' + vendorText);
+    }
     return { pr: pr };
   });
 });
@@ -191,10 +202,13 @@ registerRoute_('update', { minRole: 'requester' }, function (user, body) {
   return withLock_(function () {
     var pr = findPr_(body.id);
     var isOwn = pr.requesterEmail.toLowerCase() === user.email;
-    // finance needs 'update' for paymentStatus (see EDITABLE_FIELDS) — they
-    // never get transition access, since they aren't in the STAFF token list
-    var isStaff = user.role === 'approver' || user.role === 'admin' || user.role === 'finance';
-    if (!isStaff && !(isOwn && pr.status === 'Submitted')) {
+    // An approver's job ends at approve/reject (see TRANSITIONS_ above) — they
+    // get no general edit rights either, same as the "Edit" button being
+    // hidden from them in the UI. Finance keeps 'update' for paymentStatus,
+    // their one field to act on (they never get transition access at all,
+    // since 'finance' isn't a token in TRANSITIONS_).
+    var canUpdate = user.role === 'admin' || user.role === 'finance' || (isOwn && pr.status === 'Submitted');
+    if (!canUpdate) {
       throw new Error('You can only edit your own PRs while they are Submitted');
     }
     var changes = [];
@@ -231,18 +245,22 @@ registerRoute_('transition', { minRole: 'requester' }, function (user, body) {
     var isOwn = pr.requesterEmail.toLowerCase() === user.email;
     var sameDept = String(pr.department || '').toLowerCase() === String(user.department || '').toLowerCase();
     if (!canTransition_(pr.status, to, user.role, isOwn, sameDept)) {
-      var reason = user.role === 'approver' && !sameDept && TRANSITIONS_[pr.status] && TRANSITIONS_[pr.status][to]
-        ? ' — ' + pr.department + ' PRs are approved by ' + pr.department + ' approvers'
-        : '';
+      var allowed = TRANSITIONS_[pr.status] && TRANSITIONS_[pr.status][to];
+      var reason = '';
+      if (allowed && allowed.indexOf('approver:dept') >= 0 && user.role === 'approver' && !sameDept) {
+        reason = ' — ' + pr.department + ' PRs are approved by ' + pr.department + ' approvers';
+      } else if (allowed && user.role === 'approver') {
+        reason = ' — only an admin can do that once a decision has been made';
+      }
       throw new Error('Cannot move ' + pr.id + ' from ' + pr.status + ' to ' + to + ' as ' + user.role + reason);
     }
     var detail = pr.status + ' → ' + to;
     // record the name alongside the email, the way create does for the
     // requester — without it the row has no name and the UI has to guess one
-    // from the address
+    // from the address (or, worse, borrow one from an unrelated PR)
     if (to === 'Approved' || to === 'Rejected') {
       pr.approverEmail = user.email;
-      pr.approvedByName = user.name || '';
+      pr.approvedByName = user.name || displayNameFromEmail_(user.email);
       pr.approvedAt = nowIso_();
     }
     if (to === 'Received') pr.receivedAt = nowIso_();

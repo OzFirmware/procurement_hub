@@ -5,7 +5,6 @@ import { store } from './state.js';
 import { esc, displayName, initials, toast } from './ui.js';
 import { dashboardView } from './views/dashboard.js';
 import { vendorsView } from './views/vendors.js';
-import { vendorAddView } from './views/vendorAdd.js';
 import { prFormView } from './views/prForm.js';
 import { prDetailView } from './views/prDetail.js';
 import { adminView } from './views/admin.js';
@@ -16,7 +15,6 @@ const app = document.getElementById('app');
 const VIEWS = {
   '': { fn: dashboardView, nav: 'Dashboard' },
   'vendors': { fn: vendorsView, nav: 'Vendors', minRole: 'admin' },
-  'vendor-new': { fn: vendorAddView, minRole: 'requester' },
   'new': { fn: prFormView, minRole: 'requester' },
   'pr': { fn: prDetailView },
   'admin': { fn: adminView, nav: 'Admin', minRole: 'admin' }
