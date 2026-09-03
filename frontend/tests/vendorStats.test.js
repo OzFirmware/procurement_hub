@@ -3,7 +3,7 @@ import { vendorStats, vendorBadge, vendorPrs } from '../src/lib/vendorStats.js';
 
 const PRS = [
   { id: 'a', vendor: 'Amazon.in', status: 'Received', paymentStatus: 'Paid', amount: '1000', currency: 'INR', createdAt: '2026-06-10' },
-  { id: 'b', vendor: 'amazon.IN', status: 'Submitted', paymentStatus: 'Unpaid', amount: '250', currency: 'INR', createdAt: '2026-07-01' },
+  { id: 'b', vendor: 'amazon.IN', status: 'Ordered', paymentStatus: 'Unpaid', amount: '250', currency: 'INR', createdAt: '2026-07-01' },
   { id: 'c', vendor: 'Amazon.in', status: 'Cancelled', paymentStatus: 'Unpaid', amount: '999', currency: 'INR', createdAt: '2026-07-10' },
   { id: 'd', vendor: 'digikey.in', status: 'Ordered', paymentStatus: 'Unpaid', amount: '50', currency: 'USD', createdAt: '2026-05-20' },
   { id: 'e', vendor: 'digikey.in', status: 'Received', paymentStatus: 'Paid', amount: '300', currency: 'INR', createdAt: '2026-04-01' },
