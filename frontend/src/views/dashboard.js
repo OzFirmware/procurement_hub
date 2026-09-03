@@ -5,7 +5,8 @@ import { fmtCompact } from '../lib/currency.js';
 import { kpis, KPI_FILTERS, ownPrs, approvedPrs, approvalStats, prsForDept, pendingPayments } from '../lib/metrics.js';
 import { hasEdge, STATUSES, PAYMENT_STATUSES } from '../lib/status.js';
 
-// approver may revise a decision inline; later stages stay matrix-controlled
+// the options an approver's inline status dropdown offers — Approve or
+// Reject a Submitted PR, their only move (see statusCell below)
 const APPROVAL_LOOP = ['Submitted', 'Approved', 'Rejected'];
 
 const UI = { sel: 'total', tab: 'mine', filters: { q: '', dept: '', vendor: '', status: '', from: '', to: '' } };
@@ -132,14 +133,14 @@ function renderOverview(body, root, s) {
   if (UI.filters.vendor && !vendors.includes(UI.filters.vendor)) UI.filters.vendor = '';
   const filtered = rows.filter(matchesFilters);
   const hasFilters = Object.values(UI.filters).some(Boolean);
-  // admin: any status; approver: approval-loop dropdown while PR is in it; else chip
+  // admin: any status; approver: Approve/Reject dropdown, only while the PR
+  // is still Submitted in their own department (their whole scope, per
+  // status.js's matrix — everything past that decision, even reverting an
+  // Approved PR, is admin-only now); else a read-only chip
   const sameDept = p => String(p.department || '').toLowerCase() === String(me.department || '').toLowerCase();
   const statusCell = p => {
-    // a Submitted PR outside the approver's department isn't theirs to
-    // decide — show it read-only rather than a dropdown that would just
-    // error out on Approve/Reject; once decided, reverting stays open to any approver
     const opts = isAdmin ? STATUSES
-      : isApprover && APPROVAL_LOOP.includes(p.status) && (p.status !== 'Submitted' || sameDept(p)) ? APPROVAL_LOOP : null;
+      : isApprover && p.status === 'Submitted' && sameDept(p) ? APPROVAL_LOOP : null;
     if (!opts) return chip(p.status);
     return `<select class="status-sel" data-id="${esc(p.id)}">${opts.map(o =>
       `<option ${o === p.status ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
