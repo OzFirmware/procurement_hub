@@ -280,3 +280,14 @@ span.adm-chip{cursor:default;padding:2px 8px;font-size:11px}
 .curOpt:hover{background:var(--adm-low)}
 .curOpt span{margin-left:auto;color:var(--mut)}
 .curEmpty{padding:8px 12px;font-size:12px;color:var(--mut);letter-spacing:0;text-transform:none}
+
+/* Insights charts — plain HTML/CSS ranked bars + one SVG trend line, see lib/charts.js */
+.chart-empty{color:var(--mut);font-size:12.5px;padding:20px 0;text-align:center}
+.barlist{display:flex;flex-direction:column;gap:9px}
+.barrow{display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:center;font-size:12.5px}
+.barlabel{color:var(--adm-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bartrack{background:var(--adm-low);border-radius:6px;height:10px;overflow:hidden}
+.barfill{display:block;height:100%;border-radius:6px}
+.barval{font-variant-numeric:tabular-nums;color:var(--adm-primary);font-weight:600;white-space:nowrap;text-align:right}
+.chart-line{width:100%;height:auto;display:block}
+.chart-line circle{cursor:default}

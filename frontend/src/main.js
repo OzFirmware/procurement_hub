@@ -5,6 +5,7 @@ import { store } from './state.js';
 import { esc, displayName, initials, toast } from './ui.js';
 import { dashboardView } from './views/dashboard.js';
 import { vendorsView } from './views/vendors.js';
+import { insightsView } from './views/insights.js';
 import { prFormView } from './views/prForm.js';
 import { prDetailView } from './views/prDetail.js';
 import { adminView } from './views/admin.js';
@@ -15,6 +16,10 @@ const app = document.getElementById('app');
 const VIEWS = {
   '': { fn: dashboardView, nav: 'Dashboard' },
   'vendors': { fn: vendorsView, nav: 'Vendors', minRole: 'admin' },
+  // approver and finance are tied at rank 1 (see access.js) — both get
+  // insights, scoped to their own department for an approver, company-wide
+  // for finance/admin; a plain requester doesn't (rank 0)
+  'insights': { fn: insightsView, nav: 'Insights', minRole: 'approver' },
   'new': { fn: prFormView, minRole: 'requester' },
   'pr': { fn: prDetailView },
   'admin': { fn: adminView, nav: 'Admin', minRole: 'admin' }

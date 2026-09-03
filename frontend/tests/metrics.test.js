@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { kpis, currenciesOf, monthlyTrend, pipelineGroups, KPI_FILTERS, ownPrs, approvedPrs, approvalStats, prsForDept, pendingPayments } from '../src/lib/metrics.js';
+import { kpis, currenciesOf, monthlyTrend, pipelineGroups, KPI_FILTERS, ownPrs, approvedPrs, approvalStats, prsForDept, pendingPayments, spendByDept, spendByVendor, statusCounts, cycleTimes, agingUnpaid } from '../src/lib/metrics.js';
 
 const PRS = [
   { id: 'a', status: 'Submitted', paymentStatus: 'Unpaid', amount: '100', currency: 'USD', createdAt: '2026-05-02', updatedAt: '2026-05-02T10:00:00Z' },
@@ -126,6 +126,86 @@ describe('pendingPayments', () => {
   it('excludes PRs with no PO yet, regardless of payment status', () => {
     expect(pendingPayments(PRS4).map(p => p.id)).not.toContain('q5');
     expect(pendingPayments(PRS4).map(p => p.id)).not.toContain('q6');
+  });
+});
+
+describe('spendByDept', () => {
+  const PRS5 = [
+    { id: 's1', department: 'R&D', status: 'Received', amount: '100', currency: 'USD' },
+    { id: 's2', department: 'R&D', status: 'Ordered', amount: '50', currency: 'USD' },
+    { id: 's3', department: 'Sales', status: 'Approved', amount: '200', currency: 'USD' },
+    { id: 's4', department: 'Sales', status: 'Cancelled', amount: '999', currency: 'USD' },
+    { id: 's5', department: 'R&D', status: 'Received', amount: '30', currency: 'INR' }
+  ];
+  it('sums active PRs per department in one currency, sorted desc', () => {
+    expect(spendByDept(PRS5, 'USD')).toEqual([
+      { department: 'Sales', total: 200 }, { department: 'R&D', total: 150 }
+    ]);
+  });
+  it('excludes Cancelled and other currencies', () => {
+    expect(spendByDept(PRS5, 'INR')).toEqual([{ department: 'R&D', total: 30 }]);
+  });
+});
+
+describe('spendByVendor', () => {
+  const PRS6 = [
+    { id: 'v1', vendor: 'DigiKey', status: 'Received', amount: '500', currency: 'USD' },
+    { id: 'v2', vendor: 'RS', status: 'Ordered', amount: '300', currency: 'USD' },
+    { id: 'v3', vendor: 'Festo', status: 'Approved', amount: '200', currency: 'USD' },
+    { id: 'v4', vendor: 'Mouser', status: 'Received', amount: '100', currency: 'USD' }
+  ];
+  it('ranks vendors by spend, folding beyond topN into Other', () => {
+    expect(spendByVendor(PRS6, 'USD', 2)).toEqual([
+      { vendor: 'DigiKey', total: 500 }, { vendor: 'RS', total: 300 }, { vendor: 'Other', total: 300 }
+    ]);
+  });
+  it('returns everything, no Other row, when under topN', () => {
+    expect(spendByVendor(PRS6, 'USD', 10)).toHaveLength(4);
+  });
+});
+
+describe('statusCounts', () => {
+  it('tallies every PR by its status', () => {
+    expect(statusCounts(PRS)).toEqual({
+      Submitted: 1, 'In Transit': 1, Received: 1, Cancelled: 1, Approved: 1, Ordered: 1
+    });
+  });
+});
+
+describe('cycleTimes', () => {
+  const PRS7 = [
+    { id: 't1', createdAt: '2026-01-01T00:00:00Z', approvedAt: '2026-01-03T00:00:00Z', poDate: '2026-01-04', receivedAt: '2026-01-10T00:00:00Z' },
+    { id: 't2', createdAt: '2026-01-01T00:00:00Z', approvedAt: '2026-01-02T00:00:00Z' },
+    { id: 't3', createdAt: '2026-01-01T00:00:00Z' }
+  ];
+  it('averages only PRs that completed each step', () => {
+    const c = cycleTimes(PRS7);
+    expect(c.avgApprovalDays).toBeCloseTo(1.5, 5); // t1: 2 days, t2: 1 day
+    expect(c.approvalSamples).toBe(2);
+    expect(c.avgDeliveryDays).toBeCloseTo(6, 5); // t1 only: Jan 4 → Jan 10
+    expect(c.deliverySamples).toBe(1);
+  });
+  it('handles no completed samples', () => {
+    expect(cycleTimes([{ id: 'x' }])).toEqual(
+      { avgApprovalDays: null, approvalSamples: 0, avgDeliveryDays: null, deliverySamples: 0 });
+  });
+});
+
+describe('agingUnpaid', () => {
+  const NOW = Date.parse('2026-02-01T00:00:00Z');
+  const daysAgo = n => new Date(NOW - n * 86400000).toISOString().slice(0, 10);
+  const PRS8 = [
+    { id: 'u1', status: 'Ordered', paymentStatus: 'Unpaid', poDate: daysAgo(3) },
+    { id: 'u2', status: 'Ordered', paymentStatus: 'Unpaid', poDate: daysAgo(10) },
+    { id: 'u3', status: 'In Transit', paymentStatus: 'Unpaid', poDate: daysAgo(20) },
+    { id: 'u4', status: 'Received', paymentStatus: 'Unpaid', poDate: daysAgo(40) },
+    { id: 'u5', status: 'Ordered', paymentStatus: 'Paid', poDate: daysAgo(3) }
+  ];
+  it('buckets unpaid POs by age since poDate, ignoring Paid ones', () => {
+    expect(agingUnpaid(PRS8, NOW).map(b => b.count)).toEqual([1, 1, 1, 1]);
+  });
+  it('always returns all four buckets, even when empty', () => {
+    expect(agingUnpaid([], NOW).map(b => b.key)).toEqual(['0-7', '8-14', '15-30', '30+']);
   });
 });
 

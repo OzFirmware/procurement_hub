@@ -113,6 +113,93 @@ export function monthlyTrend(prs, metric, currency) {
   return Object.keys(months).sort().map(month => ({ month, value: months[month] }));
 }
 
+// Total spend per department, in ONE currency at a time — money is never
+// summed across currencies (see currenciesOf). Cancelled/Rejected excluded,
+// same rule as kpis().spendTotals.
+export function spendByDept(prs, currency) {
+  const t = {};
+  for (const p of prs) {
+    if (EXCLUDED.includes(p.status)) continue;
+    if ((p.currency || 'Unknown') !== currency) continue;
+    const amt = Number(p.amount);
+    if (!p.amount || !isFinite(amt)) continue;
+    const d = p.department || 'Unassigned';
+    t[d] = (t[d] || 0) + amt;
+  }
+  return Object.entries(t).map(([department, total]) => ({ department, total }))
+    .sort((a, b) => b.total - a.total);
+}
+
+// Top N vendors by spend, ONE currency at a time; everyone past N folds
+// into a single "Other" row so a long tail doesn't crowd out the chart.
+export function spendByVendor(prs, currency, topN = 6) {
+  const t = {};
+  for (const p of prs) {
+    if (EXCLUDED.includes(p.status)) continue;
+    if ((p.currency || 'Unknown') !== currency) continue;
+    const amt = Number(p.amount);
+    if (!p.amount || !isFinite(amt)) continue;
+    const v = p.vendor || 'Unspecified';
+    t[v] = (t[v] || 0) + amt;
+  }
+  const rows = Object.entries(t).map(([vendor, total]) => ({ vendor, total }))
+    .sort((a, b) => b.total - a.total);
+  if (rows.length <= topN) return rows;
+  const rest = rows.slice(topN).reduce((s, r) => s + r.total, 0);
+  return [...rows.slice(0, topN), { vendor: 'Other', total: rest }];
+}
+
+// {status: count} for every PR, no filtering — a distribution chart draws
+// this against the full STATUSES list so an empty status still gets a bar.
+export function statusCounts(prs) {
+  const by = {};
+  for (const p of prs) by[p.status] = (by[p.status] || 0) + 1;
+  return by;
+}
+
+// The two waits a requester actually feels: how long a decision takes, and
+// how long delivery takes once ordered. Only counts PRs that completed that
+// step — an in-flight PR has no end timestamp yet and would just drag a
+// running average toward zero if it were counted as 0 days.
+export function cycleTimes(prs) {
+  const daysBetween = (from, to) => {
+    const t1 = Date.parse(from), t2 = Date.parse(to);
+    return isFinite(t1) && isFinite(t2) ? (t2 - t1) / 86400000 : null;
+  };
+  const avg = arr => arr.length ? arr.reduce((s, d) => s + d, 0) / arr.length : null;
+  const approvalDays = prs
+    .map(p => p.createdAt && p.approvedAt ? daysBetween(p.createdAt, p.approvedAt) : null)
+    .filter(d => d != null && d >= 0);
+  const deliveryDays = prs
+    .map(p => p.poDate && p.receivedAt ? daysBetween(p.poDate, p.receivedAt) : null)
+    .filter(d => d != null && d >= 0);
+  return {
+    avgApprovalDays: avg(approvalDays), approvalSamples: approvalDays.length,
+    avgDeliveryDays: avg(deliveryDays), deliverySamples: deliveryDays.length
+  };
+}
+
+// Unpaid POs bucketed by how long they've been waiting, since poDate (or the
+// last update if that's missing) — the aging breakdown Finance needs, not
+// just a single total. Buckets are cumulative-exclusive and always all four,
+// so a quiet bucket still renders as zero rather than disappearing.
+const AGING_BUCKETS = [
+  { key: '0-7', label: '0–7 days', min: 0, max: 7 },
+  { key: '8-14', label: '8–14 days', min: 8, max: 14 },
+  { key: '15-30', label: '15–30 days', min: 15, max: 30 },
+  { key: '30+', label: '30+ days', min: 31, max: Infinity }
+];
+export function agingUnpaid(prs, now = Date.now()) {
+  const buckets = AGING_BUCKETS.map(b => ({ ...b, count: 0 }));
+  prs.filter(owesPayment).forEach(p => {
+    const since = Date.parse(p.poDate || p.updatedAt || p.createdAt);
+    if (!isFinite(since)) return;
+    const ageDays = (now - since) / 86400000;
+    (buckets.find(b => ageDays >= b.min && ageDays <= b.max) || buckets[buckets.length - 1]).count++;
+  });
+  return buckets;
+}
+
 export function pipelineGroups(prs) {
   const by = s => prs.filter(p => p.status === s);
   const age = p => Date.parse(p.updatedAt || p.createdAt) || 0;
