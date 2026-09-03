@@ -3,10 +3,11 @@ import { toast, esc, displayName, initials } from '../ui.js';
 import { vendorsSection, wireVendors, resetVendorPanel } from './adminVendors.js';
 import { searchBar, wireSearch, noMatchRow, hay } from './adminSearch.js';
 
-const ROLES = ['admin', 'approver', 'requester'];
+const ROLES = ['admin', 'approver', 'finance', 'requester'];
 const ROLE_INFO = {
   admin: 'Full access to settings, users, PRs, and analytics.',
   approver: 'Can authorize purchase requests and manage procurement fields.',
+  finance: 'Sees POs ready for payment and marks them paid — not tied to a department.',
   requester: 'Can create purchase requests and edit own submitted PRs.'
 };
 // mockup avatar palette: tertiary-fixed, secondary-fixed, primary-fixed, surface-variant

@@ -28,6 +28,14 @@ describe('canAccess', () => {
     expect(canAccess(staff, as('admin'))).toBe(true);
   });
 
+  it('lets finance into an approver-ranked view (tied ranks)', () => {
+    expect(canAccess(staff, as('finance'))).toBe(true);
+  });
+
+  it('keeps finance out of an admin-only view', () => {
+    expect(canAccess(adminOnly, as('finance'))).toBe(false);
+  });
+
   // Before the first sync `me` is null. Bouncing then would throw an admin off
   // their own deep link just because the session hadn't loaded yet.
   it('allows access while the session is still unknown', () => {
@@ -44,5 +52,8 @@ describe('RANK', () => {
   it('orders requester below approver below admin', () => {
     expect(RANK.requester).toBeLessThan(RANK.approver);
     expect(RANK.approver).toBeLessThan(RANK.admin);
+  });
+  it('ties finance with approver — orthogonal duties, not a hierarchy', () => {
+    expect(RANK.finance).toBe(RANK.approver);
   });
 });

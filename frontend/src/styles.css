@@ -248,6 +248,7 @@ span.adm-chip{cursor:default;padding:2px 8px;font-size:11px}
 .crumbs a{color:var(--mut)}
 .pd-body{padding:0 24px 20px}
 .pd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px 20px}
+.pd-grid .full{grid-column:1/-1}
 .pd-f b{font-size:14px;font-weight:500}
 .pd-people{display:flex;gap:32px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:16px;padding-top:16px}
 .pd-person{display:flex;gap:10px;align-items:center}

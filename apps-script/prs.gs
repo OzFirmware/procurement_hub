@@ -2,7 +2,8 @@ var PR_HEADERS = ['id', 'createdAt', 'department', 'project', 'purpose', 'reques
   'requestedByName', 'vendor', 'totalAmount', 'currency', 'status', 'priority',
   'approverEmail', 'approvedByName', 'approvedAt', 'paymentStatus', 'paymentTerm',
   'poNo', 'poDate', 'invoiceNo', 'invoiceDate', 'quotationDoc', 'courier', 'trackingNo',
-  'trackingLink', 'expectedDate', 'receivedAt', 'notes', 'updatedAt'];
+  'trackingLink', 'expectedDate', 'receivedAt', 'notes', 'updatedAt',
+  'zohoPoId', 'zohoPoNumber']; // set once a PO is pushed to Zoho Books — see zoho.gs
 
 var LOG_HEADERS = ['timestamp', 'user', 'prId', 'action', 'detail'];
 
@@ -17,9 +18,13 @@ var EDITABLE_FIELDS = ['department', 'project', 'purpose', 'requestedByName', 'v
 var ADMIN_FIELDS = PR_HEADERS.filter(function (h) { return h !== 'id'; });
 
 // ==== status matrix — MUST mirror frontend/src/lib/status.js ====
+// 'approver:dept' = role==='approver' AND their department matches the PR's;
+// the initial approve/reject decision is scoped to the requester's
+// department, admin always bypasses it, and every later staff move stays
+// open to any approver as before.
 var STAFF_ = ['approver', 'admin'];
 var TRANSITIONS_ = {
-  'Submitted':  { 'Approved': STAFF_, 'Rejected': STAFF_, 'Cancelled': STAFF_.concat(['requester:own']), 'On Hold': STAFF_ },
+  'Submitted':  { 'Approved': ['admin', 'approver:dept'], 'Rejected': ['admin', 'approver:dept'], 'Cancelled': STAFF_.concat(['requester:own']), 'On Hold': STAFF_ },
   'Approved':   { 'Ordered': STAFF_, 'Cancelled': STAFF_, 'On Hold': STAFF_, 'Rejected': STAFF_, 'Submitted': STAFF_ },
   'Ordered':    { 'In Transit': STAFF_, 'Received': STAFF_, 'Cancelled': STAFF_, 'On Hold': STAFF_ },
   'In Transit': { 'Received': STAFF_, 'On Hold': STAFF_ },
@@ -29,15 +34,30 @@ var TRANSITIONS_ = {
   'Cancelled':  {}
 };
 
-function canTransition_(from, to, role, isOwn) {
+function canTransition_(from, to, role, isOwn, sameDept) {
   var allowed = (TRANSITIONS_[from] || {})[to];
   if (!allowed) return false;
   return allowed.some(function (tok) {
-    return tok === 'requester:own' ? (role === 'requester' && isOwn) : tok === role;
+    return tok === 'requester:own' ? (role === 'requester' && isOwn)
+      : tok === 'approver:dept' ? (role === 'approver' && sameDept)
+      : tok === role;
   });
 }
 
-function prSheet_() { return sheet_('PRs', PR_HEADERS); }
+// PRs sheets created before a header existed (e.g. the Zoho columns) have
+// fewer header cells than PR_HEADERS — same pattern as vendorSheet_() in
+// vendors.gs. New fields MUST be appended at the end of PR_HEADERS, never
+// inserted in the middle: rowToPr_/writePr_ read and write by position, so
+// the sheet's column order has to keep matching PR_HEADERS' order exactly.
+function prSheet_() {
+  var sh = sheet_('PRs', PR_HEADERS);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+  var missing = PR_HEADERS.filter(function (h) { return head.indexOf(h) < 0; });
+  if (missing.length) {
+    sh.getRange(1, head.length + 1, 1, missing.length).setValues([missing]);
+  }
+  return sh;
+}
 
 function rowToPr_(row) {
   var pr = {};
@@ -171,7 +191,9 @@ registerRoute_('update', { minRole: 'requester' }, function (user, body) {
   return withLock_(function () {
     var pr = findPr_(body.id);
     var isOwn = pr.requesterEmail.toLowerCase() === user.email;
-    var isStaff = user.role === 'approver' || user.role === 'admin';
+    // finance needs 'update' for paymentStatus (see EDITABLE_FIELDS) — they
+    // never get transition access, since they aren't in the STAFF token list
+    var isStaff = user.role === 'approver' || user.role === 'admin' || user.role === 'finance';
     if (!isStaff && !(isOwn && pr.status === 'Submitted')) {
       throw new Error('You can only edit your own PRs while they are Submitted');
     }
@@ -207,8 +229,12 @@ registerRoute_('transition', { minRole: 'requester' }, function (user, body) {
     var pr = findPr_(body.id);
     var to = body.to;
     var isOwn = pr.requesterEmail.toLowerCase() === user.email;
-    if (!canTransition_(pr.status, to, user.role, isOwn)) {
-      throw new Error('Cannot move ' + pr.id + ' from ' + pr.status + ' to ' + to + ' as ' + user.role);
+    var sameDept = String(pr.department || '').toLowerCase() === String(user.department || '').toLowerCase();
+    if (!canTransition_(pr.status, to, user.role, isOwn, sameDept)) {
+      var reason = user.role === 'approver' && !sameDept && TRANSITIONS_[pr.status] && TRANSITIONS_[pr.status][to]
+        ? ' — ' + pr.department + ' PRs are approved by ' + pr.department + ' approvers'
+        : '';
+      throw new Error('Cannot move ' + pr.id + ' from ' + pr.status + ' to ' + to + ' as ' + user.role + reason);
     }
     var detail = pr.status + ' → ' + to;
     // record the name alongside the email, the way create does for the
@@ -229,6 +255,12 @@ registerRoute_('transition', { minRole: 'requester' }, function (user, body) {
       notify_('pr-' + to.toLowerCase(), [pr.requesterEmail], pr.id,
         'Your PR ' + pr.id + ' was ' + to.toLowerCase() + ' by ' + (user.name || user.email) + '.',
         'Procurement Hub: ' + pr.id + ' ' + to.toLowerCase());
+    }
+    if (to === 'Ordered') {
+      notify_('po-ready', financeUsers_(), pr.id,
+        pr.id + ' (' + pr.department + ') has a PO ready for payment' +
+        (pr.paymentTerm ? ' — ' + pr.paymentTerm : '') + (pr.poNo ? ', PO ' + pr.poNo : '') + '.',
+        'Procurement Hub: PO ready for payment — ' + pr.id);
     }
     return { pr: pr };
   });

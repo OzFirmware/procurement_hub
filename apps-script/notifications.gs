@@ -36,6 +36,14 @@ function admins_() {
     .map(function (u) { return u.email; });
 }
 
+// The Finance team, centrally — payment processing isn't department-scoped
+// like approval is. Falls back to admins when no one holds the finance role
+// yet, so a PO never goes unannounced.
+function financeUsers_() {
+  var fin = listUsers_().filter(function (u) { return u.role === 'finance'; }).map(function (u) { return u.email; });
+  return fin.length ? fin : admins_();
+}
+
 // Approvers of the department; falls back to ALL approvers when the
 // department has none mapped, so a PR never goes unannounced.
 function approversFor_(dept) {

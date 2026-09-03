@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { kpis, currenciesOf, monthlyTrend, pipelineGroups, KPI_FILTERS, ownPrs, approvedPrs, approvalStats } from '../src/lib/metrics.js';
+import { kpis, currenciesOf, monthlyTrend, pipelineGroups, KPI_FILTERS, ownPrs, approvedPrs, approvalStats, prsForDept, pendingPayments } from '../src/lib/metrics.js';
 
 const PRS = [
   { id: 'a', status: 'Submitted', paymentStatus: 'Unpaid', amount: '100', currency: 'USD', createdAt: '2026-05-02', updatedAt: '2026-05-02T10:00:00Z' },
@@ -20,9 +20,9 @@ describe('kpis', () => {
   it('excludes Cancelled/Rejected from money totals', () => {
     expect(k.spendTotals).toEqual([['INR', 5000], ['USD', 350]]);
   });
-  it('unpaid = paymentStatus Unpaid, excluding Cancelled/Rejected', () => {
-    expect(k.unpaidCount).toBe(3); // a, c, f — not d (cancelled)
-    expect(k.unpaidTotals).toEqual([['USD', 350]]);
+  it('unpaid = Ordered/In Transit/Received and not fully Paid — a PO must exist', () => {
+    expect(k.unpaidCount).toBe(2); // c, f — not a (Submitted, no PO yet), not b (Paid), not d (cancelled)
+    expect(k.unpaidTotals).toEqual([['USD', 250]]);
   });
   it('received percentage', () => {
     expect(k.received).toBe(1);
@@ -62,10 +62,16 @@ describe('KPI_FILTERS', () => {
   const ids = key => PRS.filter(KPI_FILTERS[key]).map(p => p.id);
   it('total keeps everything', () => expect(ids('total')).toEqual(['a', 'b', 'c', 'd', 'e', 'f']));
   it('pending = Submitted', () => expect(ids('pending')).toEqual(['a']));
-  it('unpaid excludes Cancelled/Rejected', () => expect(ids('unpaid')).toEqual(['a', 'c', 'f']));
+  it('unpaid requires a PO stage (Ordered/In Transit/Received) and not fully Paid', () => expect(ids('unpaid')).toEqual(['c', 'f']));
   it('transit = In Transit', () => expect(ids('transit')).toEqual(['b']));
   it('received = Received', () => expect(ids('received')).toEqual(['c']));
   it('spend = active PRs', () => expect(ids('spend')).toEqual(['a', 'b', 'c', 'e', 'f']));
+  // regression: this is the exact "admin Unpaid KPI vs Finance's Awaiting
+  // payment queue" mismatch a user reported — they must always agree because
+  // they're now the same predicate (see owesPayment in metrics.js)
+  it('agrees with pendingPayments on every PR — no admin/Finance mismatch', () => {
+    expect(PRS.filter(KPI_FILTERS.unpaid).map(p => p.id)).toEqual(pendingPayments(PRS).map(p => p.id));
+  });
 });
 
 describe('role scoping', () => {
@@ -84,6 +90,42 @@ describe('role scoping', () => {
   it('approvalStats groups by approver, most first, no rejects', () => {
     expect(approvalStats(PRS2.concat([{ id: 'v', requesterEmail: 'a@b.c', approverEmail: 'ankit@oizom.com', status: 'Ordered' }])))
       .toEqual([{ email: 'ankit@oizom.com', count: 2 }, { email: 'priya.v@oizom.com', count: 1 }]);
+  });
+});
+
+describe('prsForDept', () => {
+  const PRS3 = [
+    { id: 'p1', department: 'R&D', status: 'Submitted' },
+    { id: 'p2', department: 'R&D', status: 'Approved' },
+    { id: 'p3', department: 'projects', status: 'Submitted' },
+    { id: 'p4', department: 'R&D', status: 'Submitted' }
+  ];
+  it('matches department case-insensitively, any status', () => {
+    expect(prsForDept(PRS3, 'r&d').map(p => p.id)).toEqual(['p1', 'p2', 'p4']);
+  });
+  it('includes a PR someone else (e.g. an admin) already decided', () => {
+    expect(prsForDept(PRS3, 'R&D').map(p => p.id)).toContain('p2');
+  });
+  it('empty department yields nothing', () => {
+    expect(prsForDept(PRS3, '')).toEqual([]);
+  });
+});
+
+describe('pendingPayments', () => {
+  const PRS4 = [
+    { id: 'q1', status: 'Ordered', paymentStatus: 'Unpaid' },
+    { id: 'q2', status: 'Ordered', paymentStatus: 'Paid' },
+    { id: 'q3', status: 'In Transit', paymentStatus: 'Partially Paid' },
+    { id: 'q4', status: 'Received', paymentStatus: '' },
+    { id: 'q5', status: 'Approved', paymentStatus: 'Unpaid' }, // no PO yet — not Finance's queue
+    { id: 'q6', status: 'Submitted', paymentStatus: 'Unpaid' }
+  ];
+  it('includes Ordered/In Transit/Received PRs that are not fully Paid', () => {
+    expect(pendingPayments(PRS4).map(p => p.id)).toEqual(['q1', 'q3', 'q4']);
+  });
+  it('excludes PRs with no PO yet, regardless of payment status', () => {
+    expect(pendingPayments(PRS4).map(p => p.id)).not.toContain('q5');
+    expect(pendingPayments(PRS4).map(p => p.id)).not.toContain('q6');
   });
 });
 

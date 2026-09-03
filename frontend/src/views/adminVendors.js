@@ -140,6 +140,9 @@ function detailHtml(s, v) {
           <select class="adm-select" name="paymentTerms">${termOpts}</select>
         </label>
 
+        <div class="adm-sec">Zoho Books</div>
+        ${field('Zoho Vendor ID', 'zohoVendorId', v.zohoVendorId, 'Contact ID from Zoho Books → Contacts')}
+
         <div style="display:flex;gap:12px;margin-top:24px">
           <button class="adm-addbtn" type="submit">Save changes</button>
           <button class="btn" type="button" id="vCancel">Cancel</button>

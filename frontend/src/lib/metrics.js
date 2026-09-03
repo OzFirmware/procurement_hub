@@ -1,6 +1,17 @@
 // Pure dashboard aggregations. Money is never summed across currencies.
 const EXCLUDED = ['Cancelled', 'Rejected'];
 
+// A PR is only actually "unpaid" once there's something to pay — a PO has
+// been made (status has reached Ordered or later) and it isn't fully Paid.
+// paymentStatus defaults to 'Unpaid' at creation for every PR (see prs.gs
+// create), well before a PO exists, so matching on paymentStatus alone
+// flagged Submitted/Approved PRs as owing money when nothing had been
+// ordered yet — the exact mismatch between the admin "Unpaid" KPI and
+// Finance's "Awaiting payment" queue that this predicate fixes by being the
+// one definition both use.
+const POST_APPROVAL = ['Ordered', 'In Transit', 'Received'];
+const owesPayment = p => POST_APPROVAL.includes(p.status) && p.paymentStatus !== 'Paid';
+
 function curTotals(prs) {
   const t = {};
   for (const p of prs) {
@@ -14,7 +25,7 @@ function curTotals(prs) {
 
 export function kpis(prs) {
   const active = prs.filter(p => !EXCLUDED.includes(p.status));
-  const unpaid = active.filter(p => p.paymentStatus === 'Unpaid');
+  const unpaid = prs.filter(owesPayment);
   const received = prs.filter(p => p.status === 'Received').length;
   return {
     total: prs.length,
@@ -32,7 +43,7 @@ export function kpis(prs) {
 export const KPI_FILTERS = {
   total: () => true,
   pending: p => p.status === 'Submitted',
-  unpaid: p => !EXCLUDED.includes(p.status) && p.paymentStatus === 'Unpaid',
+  unpaid: owesPayment,
   transit: p => p.status === 'In Transit',
   received: p => p.status === 'Received',
   spend: p => !EXCLUDED.includes(p.status)
@@ -47,6 +58,21 @@ export function ownPrs(prs, email) {
 export function approvedPrs(prs, email) {
   const e = String(email || '').toLowerCase();
   return prs.filter(p => String(p.approverEmail || '').toLowerCase() === e && e && p.status !== 'Rejected');
+}
+
+// Every PR from `department`, any status — lets that department's approver
+// track a request end to end even after someone else (e.g. an admin acting
+// on their behalf) decided it, not just the ones still awaiting a decision.
+export function prsForDept(prs, department) {
+  const d = String(department || '').toLowerCase();
+  return prs.filter(p => String(p.department || '').toLowerCase() === d);
+}
+
+// PRs that have a PO (moved past Approved) and aren't fully paid yet — the
+// queue Finance works from, independent of department. Same predicate as
+// KPI_FILTERS.unpaid, so Finance's queue and the "Unpaid" KPI card never disagree.
+export function pendingPayments(prs) {
+  return prs.filter(owesPayment);
 }
 
 export function approvalStats(prs) {

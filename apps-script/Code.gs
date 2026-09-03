@@ -7,8 +7,11 @@ function registerRoute_(action, opts, handler) {
   ROUTES[action] = { minRole: opts.minRole || 'requester', handler: handler };
 }
 
-// role ordering for minRole checks
-var ROLE_RANK = { requester: 0, approver: 1, admin: 2 };
+// role ordering for minRole checks. 'finance' is tied with 'approver' rather
+// than sitting "above" or "below" it — the two are orthogonal duties, not a
+// hierarchy — but no route currently sets minRole:'approver', so today this
+// only matters for role validity checks (userSet).
+var ROLE_RANK = { requester: 0, approver: 1, finance: 1, admin: 2 };
 
 function doGet(e) {
   return json_({ ok: true, service: 'oizom-purchase-tool', time: new Date().toISOString() });

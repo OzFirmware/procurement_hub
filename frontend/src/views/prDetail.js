@@ -18,6 +18,13 @@ const trackUrl = (courier, t) =>
 const field = (label, value) =>
   `<div class="pd-f"><span class="vc-l">${esc(label)}</span><b>${value || '—'}</b></div>`;
 
+// PO fields (poNo/poDate/paymentTerm) are ADMIN_FIELDS server-side — an
+// approver's 'update' call would silently drop them, leaving the PR marked
+// Ordered with no PO actually recorded. Keep this admin-only until the
+// backend opens those fields to more roles.
+let showPo = false;
+let showPoFor = null;
+
 const person = (label, name, email, sub) => `
   <div class="pd-person">
     <span class="avatar avatar-txt">${esc(initials(email || name))}</span>
@@ -31,16 +38,33 @@ const person = (label, name, email, sub) => `
 export function prDetailView(el, s, id) {
   const p = s.prs.find(x => x.id === id);
   if (!p) { el.innerHTML = `<div class="card">PR ${esc(id)} not found ${s.prs.length ? '' : '(still syncing…)'}</div>`; return; }
-  const me = s.me || { role: '', email: '' };
+  if (showPoFor !== id) { showPo = false; showPoFor = id; } // navigating to a different PR closes any open panel
+  const me = s.me || { role: '', email: '', department: '' };
+  const isAdmin = me.role === 'admin';
   // built from every PR, not just this one — an approver whose name cell is
   // empty here is usually named on some other row
   const names = nameIndex(s.prs);
   const isOwn = p.requesterEmail.toLowerCase() === me.email.toLowerCase();
-  const isStaff = ['approver', 'admin'].includes(me.role);
+  // finance needs the Procurement details card (PO #, payment term) to know
+  // what they're paying, but never gets status-changing buttons (nextStates
+  // below is keyed off the STAFF token list in status.js, which finance isn't in)
+  const isStaff = ['approver', 'admin', 'finance'].includes(me.role);
   const canEdit = isStaff || (isOwn && p.status === 'Submitted');
-  const targets = nextStates(p.status, me.role, isOwn);
+  const sameDept = String(p.department || '').toLowerCase() === String(me.department || '').toLowerCase();
+  const targets = nextStates(p.status, me.role, isOwn, sameDept);
   // Zoho part numbers only exist in Production's workflow
   const showZoho = (p.department || '').toLowerCase() === 'production';
+  const canMakePo = isAdmin && p.status === 'Approved';
+  const canPushZoho = isAdmin && p.poNo && !p.zohoPoId;
+
+  // payment term is owned by the vendor record, not typed per PR (see the
+  // 'lives on the vendor record now' comment in prs.gs create) — prefill
+  // from there so Finance gets a consistent term without retyping it
+  const vendor = (s.vendors || []).find(v => String(v.name || '').toLowerCase() === String(p.vendor || '').toLowerCase());
+  const defaultTerm = p.paymentTerm || (vendor && vendor.paymentTerms) || '';
+  const termsList = (s.lists && s.lists.paymentTerms) || [];
+  const termOptions = ['', ...(defaultTerm && !termsList.includes(defaultTerm) ? [defaultTerm, ...termsList] : termsList)]
+    .map(t => `<option value="${esc(t)}" ${t === defaultTerm ? 'selected' : ''}>${t ? esc(t) : '— select —'}</option>`).join('');
 
   el.innerHTML = `
     <div class="dash">
@@ -51,9 +75,30 @@ export function prDetailView(el, s, id) {
         </div>
         <div style="display:flex;gap:8px">
           ${targets.map(t => `<button class="btn ${t === 'Approved' || t === 'Received' ? 'primary' : t === 'Rejected' || t === 'Cancelled' ? 'danger' : ''}" data-to="${esc(t)}">Mark ${esc(t)}</button>`).join('')}
+          ${canMakePo ? `<button class="btn primary" id="makePoBtn">Make a PO</button>` : ''}
+          ${canPushZoho ? `<button class="btn" id="zohoPushBtn">Send to Zoho Books</button>` : ''}
           ${canEdit ? `<a class="btn" href="#/new/${esc(p.id)}">Edit</a>` : ''}
         </div>
       </div>
+
+      ${canMakePo && showPo ? `
+      <div class="card">
+        <h2>Make a purchase order</h2>
+        <div class="pd-body">
+        <form class="pr" id="poForm">
+          <label>PO number* <input name="poNo" required value="${esc(p.poNo)}"></label>
+          <label>PO date <input name="poDate" type="date" value="${esc(p.poDate || new Date().toISOString().slice(0, 10))}"></label>
+          <label class="full">Payment term
+            <select name="paymentTerm">${termOptions}</select>
+          </label>
+          ${vendor && vendor.paymentTerms && !p.paymentTerm ? `<div class="full pd-sub">Prefilled from ${esc(vendor.name)}'s vendor record — change it here if this order is different.</div>` : ''}
+          <div class="full" style="display:flex;gap:8px">
+            <button class="btn primary" type="submit">Create PO &amp; mark Ordered</button>
+            <button class="btn" type="button" id="poCancelBtn">Cancel</button>
+          </div>
+        </form>
+        </div>
+      </div>` : ''}
 
       <div class="card">
         <h2>General information</h2>
@@ -116,6 +161,7 @@ export function prDetailView(el, s, id) {
           ${field('Invoice / order #', [esc(p.invoiceNo), fmtDate(p.invoiceDate)].filter(Boolean).join(' · '))}
           ${field('Payment term', esc(p.paymentTerm))}
           ${field('Quotation / PI', p.quotationDoc ? `<a href="${esc(p.quotationDoc)}" target="_blank" rel="noopener">open ↗</a>` : '')}
+          ${field('Zoho Books PO', p.zohoPoNumber ? esc(p.zohoPoNumber) : '')}
         </div>
         </div>
       </div>` : ''}
@@ -140,6 +186,39 @@ export function prDetailView(el, s, id) {
       store.refresh();
     } catch (e) { toast(e.message, true); btn.disabled = false; }
   });
+
+  const makePoBtn = el.querySelector('#makePoBtn');
+  if (makePoBtn) makePoBtn.onclick = () => { showPo = true; prDetailView(el, s, id); };
+
+  const poCancelBtn = el.querySelector('#poCancelBtn');
+  if (poCancelBtn) poCancelBtn.onclick = () => { showPo = false; prDetailView(el, s, id); };
+
+  const poForm = el.querySelector('#poForm');
+  if (poForm) poForm.onsubmit = async e => {
+    e.preventDefault();
+    const fd = new FormData(poForm);
+    const poNo = String(fd.get('poNo') || '').trim();
+    if (!poNo) return;
+    const btn = poForm.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    try {
+      await api('update', { id: p.id, updates: { poNo, poDate: fd.get('poDate') || '', paymentTerm: fd.get('paymentTerm') || '' } });
+      await api('transition', { id: p.id, to: 'Ordered' });
+      toast(p.id + ' → Ordered (PO ' + poNo + ')');
+      showPo = false;
+      store.refresh();
+    } catch (err) { toast(err.message, true); btn.disabled = false; }
+  };
+
+  const zohoBtn = el.querySelector('#zohoPushBtn');
+  if (zohoBtn) zohoBtn.onclick = async () => {
+    zohoBtn.disabled = true;
+    try {
+      const { pr: updated } = await api('zohoPushPo', { id: p.id });
+      toast(p.id + ' → Zoho Books PO ' + updated.zohoPoNumber);
+      store.refresh();
+    } catch (e) { toast(e.message, true); zohoBtn.disabled = false; }
+  };
 
   const del = el.querySelector('#devDelete');
   if (del) del.onclick = async () => {

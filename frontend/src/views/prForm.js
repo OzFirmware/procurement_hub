@@ -1,12 +1,13 @@
 import { api } from '../api.js';
 import { store } from '../state.js';
 import { toast, esc, chip } from '../ui.js';
-import { STATUSES } from '../lib/status.js';
+import { STATUSES, PAYMENT_STATUSES } from '../lib/status.js';
 import { computeLineTotal, computeTotalAmount } from '../lib/items.js';
 import { fmtMoney } from '../lib/currency.js';
 import { searchCurrencies, isCurrency, currencyLabel } from '../lib/currencies.js';
+import { saveDraft, peekDraft, clearDraft } from '../lib/prDraft.js';
 
-const PAYMENTS = ['Unpaid', 'Paid', 'Partially Paid', 'FOC / Free'];
+const PAYMENTS = PAYMENT_STATUSES;
 const FALLBACK = {
   priorities: ['Critical', 'High', 'Medium', 'Low'],
   couriers: ['BlueDart', 'DHL', 'FedEx', 'DTDC', 'India Post', 'Other'],
@@ -79,10 +80,19 @@ function collectItems(form) {
 
 export function prFormView(el, s, editId) {
   const editing = editId ? s.prs.find(p => p.id === editId) : null;
-  const p = editing || {};
-  const items = editing ? (p.items || []) : [{}];
+  let p = editing || {};
+  let items = editing ? (p.items || []) : [{}];
+  // Returning from the "+ Add new vendor" redirect: restore whatever the
+  // requester had already typed (and the newly picked vendor) before we
+  // navigated them away — see lib/prDraft.js.
+  const draft = peekDraft();
+  clearDraft(); // one-shot: never let a stale draft leak into an unrelated visit
+  if (draft && draft.editId === (editId || '')) {
+    p = { ...p, ...draft.fields };
+    if (draft.items && draft.items.length) items = draft.items;
+  }
   const me = s.me || { role: '' };
-  const staff = ['approver', 'admin'].includes(me.role);
+  const staff = ['approver', 'admin', 'finance'].includes(me.role);
   // projects and vendors for the PR's department (creating: the user's own)
   const dept = editing ? (p.department || '') : (me.department || '');
   const projNames = (s.projects || [])
@@ -122,10 +132,11 @@ export function prFormView(el, s, editId) {
             <div class="pd-grid">
               <label>${lbl('Project*', 'project')} <select name="project" required>${opts(projNames, p.project || '', true)}</select></label>
               <label>${lbl('Purpose', 'purpose')} <input name="purpose" value="${esc(p.purpose)}"></label>
-              <div class="pd-field">${lbl('Vendor', 'vendor')}
+              <div class="pd-field full">${lbl('Vendor', 'vendor')}
                 <input id="venSearch" class="combo" autocomplete="off" spellcheck="false" placeholder="Search vendors…" value="${esc(vendorLabelOf(p.vendor))}">
                 <input type="hidden" name="vendor" value="${esc(p.vendor || '')}">
                 <div class="curList" id="venList" hidden></div>
+                <div><button type="button" class="btn" id="venAddNewBtn" style="margin-top:8px">Vendor not listed? Add new vendor</button></div>
               </div>
               <div class="pd-field">${lbl('Currency', 'currency')}
                 <input id="curSearch" class="combo" autocomplete="off" spellcheck="false" value="${esc(currencyLabel(p.currency || 'INR'))}">
@@ -274,6 +285,25 @@ export function prFormView(el, s, editId) {
     toLabel: v => vendorLabelOf(v),
     allowEmpty: true // vendor is optional
   });
+
+  const venSearchInput = el.querySelector('#venSearch');
+  // Redirects to a dedicated Add Vendor page (open to every role, unlike the
+  // admin-only Vendors section) and back — snapshot everything typed so far
+  // into sessionStorage first, since the navigation fully unmounts this view.
+  el.querySelector('#venAddNewBtn').onclick = () => {
+    const fields = {};
+    for (const [k, v] of new FormData(form)) if (!k.startsWith('i_')) fields[k] = v;
+    const draftItems = collectItems(form);
+    saveDraft({
+      editId: editId || '',
+      fields,
+      items: draftItems.length ? draftItems : [{}],
+      department: dept,
+      prefillVendorName: venSearchInput.value.trim(),
+      returnHash: location.hash
+    });
+    location.hash = '#/vendor-new';
+  };
 
   el.querySelector('#addItem').onclick = () => {
     rowsEl.insertAdjacentHTML('beforeend', itemRowHtml(s, {}, rowsEl.children.length, typeNames, showZoho));
